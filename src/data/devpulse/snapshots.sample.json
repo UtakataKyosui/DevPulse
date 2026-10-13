@@ -1,0 +1,94 @@
+{
+  "snapshots": [
+    {
+      "repository": "UtakataKyosui/DevPulse",
+      "visibility": "public",
+      "lastActivityAt": "2026-10-10T09:00:00Z",
+      "fetchedAt": "2026-10-13T00:00:00Z",
+      "milestones": [
+        {
+          "number": 1,
+          "title": "MVP",
+          "description": "MVP リリース",
+          "state": "open",
+          "openIssues": 6,
+          "closedIssues": 2,
+          "dueOn": "2026-11-30T00:00:00Z",
+          "htmlUrl": "https://github.com/UtakataKyosui/DevPulse/milestone/1"
+        }
+      ]
+    },
+    {
+      "repository": "example/empty",
+      "visibility": "public",
+      "lastActivityAt": null,
+      "fetchedAt": "2026-10-13T00:00:00Z",
+      "milestones": [
+        {
+          "number": 1,
+          "title": "v0.1",
+          "description": null,
+          "state": "open",
+          "openIssues": 0,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/example/empty/milestone/1"
+        }
+      ]
+    },
+    {
+      "repository": "example/closed",
+      "visibility": "public",
+      "lastActivityAt": "2026-08-01T00:00:00Z",
+      "fetchedAt": "2026-10-13T00:00:00Z",
+      "milestones": [
+        {
+          "number": 2,
+          "title": "v1.0",
+          "description": "クローズ済み",
+          "state": "closed",
+          "openIssues": 1,
+          "closedIssues": 3,
+          "dueOn": "2026-07-31T00:00:00Z",
+          "htmlUrl": "https://github.com/example/closed/milestone/2"
+        }
+      ]
+    },
+    {
+      "repository": "example/unselected",
+      "visibility": "public",
+      "lastActivityAt": "2026-09-01T00:00:00Z",
+      "fetchedAt": "2026-10-13T00:00:00Z",
+      "milestones": [
+        {
+          "number": 1,
+          "title": "v0.1",
+          "description": null,
+          "state": "open",
+          "openIssues": 1,
+          "closedIssues": 1,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/example/unselected/milestone/1"
+        }
+      ]
+    },
+    {
+      "repository": "example/private",
+      "visibility": "private",
+      "lastActivityAt": "2026-10-01T00:00:00Z",
+      "fetchedAt": "2026-10-13T00:00:00Z",
+      "milestones": [
+        {
+          "number": 1,
+          "title": "secret-milestone",
+          "description": null,
+          "state": "open",
+          "openIssues": 1,
+          "closedIssues": 1,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/example/private/milestone/1"
+        }
+      ]
+    }
+  ]
+}

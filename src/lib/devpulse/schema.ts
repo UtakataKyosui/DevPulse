@@ -1,0 +1,78 @@
+import { z } from 'zod';
+import { LIFECYCLES } from './types.ts';
+
+const repositorySchema = z
+  .string()
+  .regex(/^[\w.-]+\/[\w.-]+$/, 'repository must be "owner/repo"');
+
+export const projectDefinitionSchema = z.strictObject({
+  id: z.string().min(1),
+  slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
+  name: z.string().min(1),
+  description: z.string(),
+  repository: repositorySchema,
+  published: z.boolean(),
+  lifecycle: z.enum(LIFECYCLES),
+  featuredMilestoneNumber: z.number().int().positive().optional(),
+});
+
+export const projectConfigSchema = z
+  .strictObject({
+    projects: z.array(projectDefinitionSchema),
+  })
+  .superRefine(({ projects }, ctx) => {
+    for (const key of ['id', 'slug', 'repository'] as const) {
+      const seen = new Set<string>();
+      projects.forEach((project, index) => {
+        const value = project[key];
+        if (seen.has(value)) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['projects', index, key],
+            message: `duplicate ${key}: ${value}`,
+          });
+        }
+        seen.add(value);
+      });
+    }
+  });
+
+const count = z.number().int().nonnegative();
+const dateTime = z.string().datetime({ offset: true });
+
+export const milestoneSnapshotSchema = z.object({
+  number: z.number().int().positive(),
+  title: z.string(),
+  description: z.string().nullable(),
+  state: z.enum(['open', 'closed']),
+  openIssues: count,
+  closedIssues: count,
+  dueOn: dateTime.nullable(),
+  htmlUrl: z.string().url(),
+});
+
+export const projectSnapshotSchema = z.object({
+  repository: repositorySchema,
+  visibility: z.enum(['public', 'private']),
+  milestones: z.array(milestoneSnapshotSchema),
+  lastActivityAt: dateTime.nullable(),
+  fetchedAt: dateTime,
+});
+
+export const snapshotFileSchema = z.object({
+  snapshots: z.array(projectSnapshotSchema),
+});
+
+/** GitHub REST API `GET /repos/{owner}/{repo}/milestones` の 1 件 */
+export const rawMilestoneSchema = z.object({
+  number: z.number().int().positive(),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  state: z.enum(['open', 'closed']),
+  open_issues: count,
+  closed_issues: count,
+  due_on: dateTime.nullable().optional(),
+  html_url: z.string().url(),
+});
+
+export const rawMilestonesSchema = z.array(rawMilestoneSchema);
