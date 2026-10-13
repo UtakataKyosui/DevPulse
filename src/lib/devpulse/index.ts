@@ -25,6 +25,7 @@ export {
   normalizeProjectSnapshot,
 } from './normalize.ts';
 export { calcProgressPercent } from './progress.ts';
+export { repositoryKey } from './repository-key.ts';
 export {
   issueClosureSchema,
   milestoneSnapshotSchema,
