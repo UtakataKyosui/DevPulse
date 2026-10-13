@@ -30,6 +30,9 @@ export default defineConfig({
     source: {
       define: {
         __DEVPULSE_BUILD_TIME__: JSON.stringify(DEVPULSE_BUILD_TIME),
+        __DEVPULSE_API_URL__: JSON.stringify(
+          process.env.DEVPULSE_API_URL ?? '',
+        ),
         __DEVPULSE_PUBLIC_DATA__: JSON.stringify(DEVPULSE_PUBLIC_DATA),
       },
     },

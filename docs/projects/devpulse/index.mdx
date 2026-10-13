@@ -1,0 +1,51 @@
+---
+title: DevPulse
+---
+
+import {
+  IssueThroughput,
+  MilestoneList,
+  NextActions,
+  ProjectDetail,
+  ProjectOverview,
+  ProjectStatus,
+  RecentActivity,
+} from '../../../src/components/devpulse/ProjectDetail.tsx';
+
+# DevPulse
+
+<ProjectDetail slug="devpulse">
+
+## 概要
+
+GitHub Milestones を正本として、個人開発の進捗を一目で確認できるようにするダッシュボードです。サイト全体は Rspress / MDX で静的に配信し、変動する進捗データだけをブラウザで取得します。
+
+<ProjectOverview />
+
+## 現在地
+
+<ProjectStatus />
+
+## Milestones
+
+<MilestoneList />
+
+## Issue 進捗
+
+<IssueThroughput />
+
+## 最近の活動
+
+<RecentActivity />
+
+## 次にやること
+
+<NextActions />
+
+## 関連資料
+
+- [データモデル](/guide/devpulse/data-model)
+- [算出ルール](/guide/devpulse/health-rules)
+- [Home ダッシュボード](/guide/devpulse/home-dashboard)
+
+</ProjectDetail>
