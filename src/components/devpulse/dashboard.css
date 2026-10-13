@@ -1,5 +1,6 @@
 /* DevPulse ダッシュボード。.devpulse- 配下にスコープし、Rspress の CSS 変数でテーマ追従する */
-.devpulse-dashboard {
+.devpulse-dashboard,
+.devpulse-detail {
   --devpulse-stable: #15803d;
   --devpulse-warning: #a16207;
   --devpulse-stalled: #b91c1c;
@@ -23,7 +24,8 @@
   color: var(--rp-c-text-1);
 }
 
-.dark .devpulse-dashboard {
+.dark .devpulse-dashboard,
+.dark .devpulse-detail {
   --devpulse-stable: #86efac;
   --devpulse-warning: #fde047;
   --devpulse-stalled: #fca5a5;
@@ -324,4 +326,11 @@
 .devpulse-detail__unavailable {
   font-size: 14px;
   color: var(--rp-c-text-2);
+}
+
+/* 色変数のスコープだけを共有し、ダッシュボード用の余白は詳細ページに持ち込まない */
+.devpulse-detail {
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }

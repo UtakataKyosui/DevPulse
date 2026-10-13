@@ -20,8 +20,10 @@ export function ProjectDetail({
   const view = views.find((v) => v.definition.slug === slug);
   return (
     <DetailContext.Provider value={view ? buildDetailModel(view) : null}>
-      <LoadNotice state={state} />
-      {children}
+      <div className="devpulse-detail">
+        <LoadNotice state={state} />
+        {children}
+      </div>
     </DetailContext.Provider>
   );
 }
