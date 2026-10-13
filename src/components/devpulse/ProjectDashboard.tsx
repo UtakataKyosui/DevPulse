@@ -1,18 +1,27 @@
 import type { ProjectView } from '../../lib/devpulse/index.ts';
+import { LoadNotice } from './LoadNotice.tsx';
 import { buildDashboardModel } from './model.ts';
 import { ProjectCard } from './ProjectCard.tsx';
 import { ProjectSummary } from './ProjectSummary.tsx';
 import { SyncStatus } from './SyncStatus.tsx';
+import type { LoadState } from './use-project-views.ts';
 
 import './dashboard.css';
 
-export function ProjectDashboard({ views }: { views: ProjectView[] }) {
+export function ProjectDashboard({
+  views,
+  loadState = 'static',
+}: {
+  views: ProjectView[];
+  loadState?: LoadState;
+}) {
   const model = buildDashboardModel(views);
   return (
     <section className="devpulse-dashboard" aria-labelledby="devpulse-title">
       <h2 id="devpulse-title" className="devpulse-dashboard__title">
         プロジェクトの状況
       </h2>
+      <LoadNotice state={loadState} />
       <SyncStatus sync={model.sync} />
       <ProjectSummary summary={model.summary} />
       <p className="devpulse-legend">

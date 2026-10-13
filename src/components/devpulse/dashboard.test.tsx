@@ -277,3 +277,27 @@ describe('ProjectDashboard 描画', () => {
     expect(html).toContain('未同期');
   });
 });
+
+describe('LoadNotice / loadState', () => {
+  const { def, snap } = make({});
+  const views = buildProjectViews([def], snap, { now: NOW });
+
+  it('static では通知を出さない', () => {
+    expect(renderToString(<ProjectDashboard views={views} />)).not.toContain(
+      'devpulse-load',
+    );
+  });
+
+  it('loading / error でも既存データのカードを表示し続ける', () => {
+    const loading = renderToString(
+      <ProjectDashboard views={views} loadState="loading" />,
+    );
+    expect(loading).toContain('取得しています');
+    expect(loading).toContain('devpulse-cards');
+    const error = renderToString(
+      <ProjectDashboard views={views} loadState="error" />,
+    );
+    expect(error).toContain('取得できませんでした');
+    expect(error).toContain('devpulse-cards');
+  });
+});
