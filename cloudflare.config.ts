@@ -21,7 +21,7 @@ export default defineConfig({
     assets: { runWorkerFirst: ['/api/*', '/reports/*', '/rss/*'] },
     triggers: [
       triggers.scheduled({ schedule: '0 * * * *' }),
-      triggers.scheduled({ schedule: '0 0 * * *' }),
+      triggers.scheduled({ schedule: '0 12 * * *' }),
     ],
   },
 });
