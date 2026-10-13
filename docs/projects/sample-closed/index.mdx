@@ -1,0 +1,51 @@
+---
+title: Sample Closed
+---
+
+import {
+  IssueThroughput,
+  MilestoneList,
+  NextActions,
+  ProjectDetail,
+  ProjectOverview,
+  ProjectStatus,
+  RecentActivity,
+} from '../../../src/components/devpulse/ProjectDetail.tsx';
+
+# Sample Closed
+
+<ProjectDetail slug="sample-closed">
+
+## 概要
+
+閉じた Milestone に未完了 Issue が残るサンプル。動作確認用のサンプルプロジェクトです。
+
+<ProjectOverview />
+
+## 現在地
+
+<ProjectStatus />
+
+## Milestones
+
+<MilestoneList />
+
+## Issue 進捗
+
+<IssueThroughput />
+
+## 最近の活動
+
+<RecentActivity />
+
+## 次にやること
+
+<NextActions />
+
+## 関連資料
+
+- [データモデル](/guide/devpulse/data-model)
+- [算出ルール](/guide/devpulse/health-rules)
+- [Home ダッシュボード](/guide/devpulse/home-dashboard)
+
+</ProjectDetail>

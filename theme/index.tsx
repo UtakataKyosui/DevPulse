@@ -2,22 +2,18 @@ import {
   Layout as BaseLayout,
   type LayoutProps,
 } from '@rspress/core/theme-original';
-import { useEffect, useMemo, useState } from 'react';
-import {
-  getBuildTime,
-  loadProjectViews,
-} from '../src/components/devpulse/dashboard-data.ts';
 import { ProjectDashboard } from '../src/components/devpulse/ProjectDashboard.tsx';
+import { useProjectViews } from '../src/components/devpulse/use-project-views.ts';
 
 // afterHero は Home(pageType: home)の Hero 直下のみに描画され、doc ページには影響しない
 export function Layout(props: LayoutProps) {
-  // 初回描画はビルド時刻で SSG と一致させ、マウント後に閲覧時刻で Health・期限・鮮度を再評価する
-  const [now, setNow] = useState(getBuildTime);
-  useEffect(() => setNow(new Date()), []);
-  const views = useMemo(() => loadProjectViews(now), [now]);
-  return (
-    <BaseLayout {...props} afterHero={<ProjectDashboard views={views} />} />
-  );
+  return <BaseLayout {...props} afterHero={<HomeDashboard />} />;
+}
+
+// データ取得は Home の描画時だけ行い、通常ドキュメントでは API を呼ばない
+function HomeDashboard() {
+  const { views, state } = useProjectViews();
+  return <ProjectDashboard views={views} loadState={state} />;
 }
 
 export * from '@rspress/core/theme-original';

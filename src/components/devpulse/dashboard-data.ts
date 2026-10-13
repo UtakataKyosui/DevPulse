@@ -20,10 +20,16 @@ export function getBuildTime(): Date {
   );
 }
 
+export function loadPublicData(): {
+  projects: ProjectDefinition[];
+  snapshots: GitHubProjectSnapshot[];
+} {
+  return typeof __DEVPULSE_PUBLIC_DATA__ === 'undefined'
+    ? { projects: [], snapshots: [] }
+    : __DEVPULSE_PUBLIC_DATA__;
+}
+
 export function loadProjectViews(now: Date = getBuildTime()): ProjectView[] {
-  const { projects, snapshots } =
-    typeof __DEVPULSE_PUBLIC_DATA__ === 'undefined'
-      ? { projects: [], snapshots: [] }
-      : __DEVPULSE_PUBLIC_DATA__;
+  const { projects, snapshots } = loadPublicData();
   return buildProjectViews(projects, snapshots, { now });
 }

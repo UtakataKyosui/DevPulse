@@ -5,6 +5,11 @@
     "activeMatch": "/guide/"
   },
   {
+    "text": "Projects",
+    "link": "/projects/devpulse/",
+    "activeMatch": "/projects/"
+  },
+  {
     "text": "API",
     "link": "/api/",
     "activeMatch": "/api/"

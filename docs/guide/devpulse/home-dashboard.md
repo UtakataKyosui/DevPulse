@@ -17,6 +17,15 @@ Home(`pageType: home`)の Hero 直下に、公開プロジェクトの状況を�
 - 休止・完了・アーカイブ・計画中は Health の評価対象外で、赤になりません。
 - 「最終同期」はデータ取得時点、「最終Commit」はリモートの最新コミット日で、別の値です。同期が古い場合は警告を表示します。
 
+## 最新データの取得とデプロイ
+
+- 環境変数 `DEVPULSE_API_URL` を設定してビルドすると、ブラウザが `GET {DEVPULSE_API_URL}/snapshots`(Cloudflare Worker の読み取り専用 API、レスポンスは `{ "snapshots": [...] }`)から公開 Snapshot を取得して表示を更新します。未設定の場合は `src/data/devpulse/*.json` の fixture だけで表示します(ローカル開発用)。
+- 取得は Home の描画時だけ行い、通常のドキュメントページでは API を呼びません。
+- 表示できるプロジェクトの定義は `projects.sample.json` からビルド時に公開確認済みのものだけを埋め込みます。ビルド時点で public な Snapshot が無かったプロジェクトは、API が後から Snapshot を返しても再ビルドするまで表示されません。
+- 取得中は「取得しています」、失敗時は「取得できませんでした」を表示し、どちらもビルド時点のデータを表示し続けます。API が到達不能でもページは表示されます。
+- Pages と Worker が別 origin の場合、Worker 側で Pages の origin だけに `Access-Control-Allow-Origin` を限定してください。同一 origin の `/api/*` として公開できるなら `DEVPULSE_API_URL=/api` を推奨します。
+- ビルド出力は `doc_build/`(Cloudflare Pages の出力ディレクトリ、ビルドコマンドは `pnpm build`)です。Snapshot の同期で再ビルドは不要です。
+
 ## 未対応(今後)
 
-Cloudflare Worker API からの取得(ロード中/通信失敗表示を含む)と、詳細ページ `/projects/:slug/` の実体は別 Issue(#7 / #6)で対応します。カードのリンクは先行して `/projects/:slug/` を指します。
+Worker API 自体(#7)と、詳細ページ `/projects/:slug/` の実体(#6)は別 Issue で対応します。カードのリンクは先行して `/projects/:slug/` を指します。
