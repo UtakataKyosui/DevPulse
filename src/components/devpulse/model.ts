@@ -1,4 +1,5 @@
 import {
+  calcProgressPercent,
   type DeadlineStatus,
   HEALTH_LABELS,
   type HealthStatus,
@@ -52,6 +53,13 @@ export interface CardModel {
   lifecycle: Lifecycle;
   lifecycleLabel: string;
   milestoneTitle: string | null;
+  milestones: {
+    number: number;
+    title: string;
+    href: string;
+    issueText: string;
+    progress: ProgressModel;
+  }[];
   emptyMessage: string | null;
   progress: ProgressModel;
   health: {
@@ -182,6 +190,13 @@ export function toCardModel(view: ProjectView): CardModel {
     lifecycle: definition.lifecycle,
     lifecycleLabel,
     milestoneTitle: milestone?.title ?? null,
+    milestones: (snapshot?.milestones ?? []).map((m) => ({
+      number: m.number,
+      title: m.title,
+      href: m.htmlUrl,
+      issueText: `完了 ${m.closedIssues} / ${m.openIssues + m.closedIssues} 件`,
+      progress: describeProgress(calcProgressPercent(m), healthLabel),
+    })),
     emptyMessage: emptyReason ? EMPTY_MESSAGES[emptyReason] : null,
     progress: describeProgress(view.progressPercent, healthLabel),
     health: {

@@ -43,6 +43,25 @@ export function ProjectCard({ card }: { card: CardModel }) {
           {card.deadline.text}
         </dd>
       </dl>
+      {card.milestones.length > 0 && (
+        <div className="devpulse-card__milestones">
+          <h4>Milestones</h4>
+          <ul className="devpulse-milestones">
+            {card.milestones.map((milestone) => (
+              <li key={milestone.number}>
+                <a href={milestone.href}>{milestone.title}</a>
+                <span className="devpulse-card__empty">
+                  {milestone.issueText}
+                </span>
+                <ProgressGauge
+                  progress={milestone.progress}
+                  tone={health.tone}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </li>
   );
 }
