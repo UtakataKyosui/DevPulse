@@ -8,10 +8,12 @@
     "check": "biome check --write",
     "dev": "rspress dev",
     "format": "biome format --write",
-    "preview": "rspress preview"
+    "preview": "rspress preview",
+    "test": "vitest run"
   },
   "dependencies": {
-    "@rspress/core": "^2.0.22"
+    "@rspress/core": "^2.0.22",
+    "zod": "^4.6.6"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.11",
@@ -20,6 +22,7 @@
     "@types/react-dom": "^19.2.7",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.4"
   }
 }

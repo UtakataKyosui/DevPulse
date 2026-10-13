@@ -1,0 +1,48 @@
+import type { CardModel } from './model.ts';
+import { ProgressGauge } from './ProgressGauge.tsx';
+
+export function ProjectCard({ card }: { card: CardModel }) {
+  const { health } = card;
+  return (
+    <li className="devpulse-card">
+      <h3 className="devpulse-card__title">
+        <a className="devpulse-card__link" href={card.href}>
+          {card.name}
+        </a>
+      </h3>
+      <p className="devpulse-card__desc">{card.description}</p>
+      <div className="devpulse-card__badges">
+        <span className="devpulse-badge devpulse-badge--lifecycle">
+          Lifecycle: {card.lifecycleLabel}
+        </span>
+        <span className={`devpulse-badge devpulse-tone--${health.tone}`}>
+          <span aria-hidden="true">{health.icon} </span>
+          Health: {health.label}
+        </span>
+        {card.stale && (
+          <span className="devpulse-badge devpulse-badge--stale">
+            <span aria-hidden="true">⚠ </span>
+            データが古い
+          </span>
+        )}
+      </div>
+      <dl className="devpulse-card__meta">
+        <dt>Milestone</dt>
+        <dd>{card.milestoneTitle ?? '—'}</dd>
+        <dt>Issue消化率</dt>
+        <dd>
+          <ProgressGauge progress={card.progress} tone={health.tone} />
+          {card.emptyMessage && (
+            <span className="devpulse-card__empty">{card.emptyMessage}</span>
+          )}
+        </dd>
+        <dt>最終Commit</dt>
+        <dd>{card.lastCommitText}</dd>
+        <dt>期限</dt>
+        <dd className={`devpulse-deadline--${card.deadline.status}`}>
+          {card.deadline.text}
+        </dd>
+      </dl>
+    </li>
+  );
+}

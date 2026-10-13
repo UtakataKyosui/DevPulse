@@ -1,0 +1,305 @@
+/* DevPulse ダッシュボード。.devpulse- 配下にスコープし、Rspress の CSS 変数でテーマ追従する */
+.devpulse-dashboard {
+  --devpulse-stable: #15803d;
+  --devpulse-warning: #a16207;
+  --devpulse-stalled: #b91c1c;
+  --devpulse-unknown: #52525b;
+  --devpulse-inactive: #475569;
+  --devpulse-stable-bg: #dcfce7;
+  --devpulse-warning-bg: #fef3c7;
+  --devpulse-stalled-bg: #fee2e2;
+  --devpulse-unknown-bg: #e4e4e7;
+  --devpulse-inactive-bg: #e2e8f0;
+  --devpulse-fill-stable: #22c55e;
+  --devpulse-fill-warning: #eab308;
+  --devpulse-fill-stalled: #ef4444;
+  --devpulse-fill-unknown: #a1a1aa;
+  --devpulse-fill-inactive: #94a3b8;
+
+  box-sizing: border-box;
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 32px 24px 48px;
+  color: var(--rp-c-text-1);
+}
+
+.dark .devpulse-dashboard {
+  --devpulse-stable: #86efac;
+  --devpulse-warning: #fde047;
+  --devpulse-stalled: #fca5a5;
+  --devpulse-unknown: #d4d4d8;
+  --devpulse-inactive: #cbd5e1;
+  --devpulse-stable-bg: #14532d;
+  --devpulse-warning-bg: #422006;
+  --devpulse-stalled-bg: #450a0a;
+  --devpulse-unknown-bg: #3f3f46;
+  --devpulse-inactive-bg: #334155;
+  --devpulse-fill-stable: #4ade80;
+  --devpulse-fill-warning: #facc15;
+  --devpulse-fill-stalled: #f87171;
+  --devpulse-fill-unknown: #a1a1aa;
+  --devpulse-fill-inactive: #94a3b8;
+}
+
+.devpulse-dashboard *,
+.devpulse-dashboard *::before,
+.devpulse-dashboard *::after {
+  box-sizing: border-box;
+}
+
+.devpulse-dashboard__title {
+  margin: 0 0 12px;
+  font-size: 1.5rem;
+  border: 0;
+  padding: 0;
+}
+
+.devpulse-dashboard__empty {
+  padding: 24px;
+  border: 1px dashed var(--rp-c-divider);
+  border-radius: 8px;
+  color: var(--rp-c-text-2);
+}
+
+/* tone: テキスト色と背景(バッジ・集計) */
+.devpulse-tone--stable {
+  color: var(--devpulse-stable);
+  background: var(--devpulse-stable-bg);
+}
+.devpulse-tone--warning {
+  color: var(--devpulse-warning);
+  background: var(--devpulse-warning-bg);
+}
+.devpulse-tone--stalled {
+  color: var(--devpulse-stalled);
+  background: var(--devpulse-stalled-bg);
+}
+.devpulse-tone--unknown {
+  color: var(--devpulse-unknown);
+  background: var(--devpulse-unknown-bg);
+}
+.devpulse-tone--inactive {
+  color: var(--devpulse-inactive);
+  background: var(--devpulse-inactive-bg);
+}
+.devpulse-tone--total {
+  color: var(--rp-c-text-1);
+  background: var(--rp-c-bg-soft);
+}
+
+/* 同期状況 */
+.devpulse-sync p {
+  margin: 4px 0;
+}
+.devpulse-sync__note {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--rp-c-text-2);
+}
+.devpulse-sync__warning {
+  padding: 8px 12px;
+  border: 1px solid var(--devpulse-warning);
+  border-radius: 6px;
+  color: var(--devpulse-warning);
+  background: var(--devpulse-warning-bg);
+}
+
+/* 集計 */
+.devpulse-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 8px;
+  margin: 16px 0;
+  padding: 0;
+  list-style: none;
+}
+.devpulse-summary__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 8px;
+}
+.devpulse-summary__count {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.devpulse-summary__label {
+  font-size: 0.8125rem;
+}
+
+/* 凡例 */
+.devpulse-legend {
+  margin: 0 0 16px;
+  font-size: 0.8125rem;
+  line-height: 2;
+  color: var(--rp-c-text-2);
+}
+.devpulse-legend__chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* カード */
+.devpulse-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.devpulse-card {
+  position: relative;
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 12px;
+  background: var(--rp-c-bg-soft);
+}
+.devpulse-card:hover {
+  border-color: var(--rp-c-brand);
+}
+.devpulse-card:focus-within {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 2px;
+}
+.devpulse-card__title {
+  margin: 0 0 4px;
+  font-size: 1.125rem;
+  border: 0;
+  padding: 0;
+}
+/* カード全体をクリック可能にしつつ、リンクは 1 つだけ(スクリーンリーダー向け) */
+.devpulse-card__link {
+  color: var(--rp-c-text-1);
+  text-decoration: none;
+}
+.devpulse-card__link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+}
+.devpulse-card__link:focus-visible {
+  outline: none;
+  text-decoration: underline;
+}
+.devpulse-card__desc {
+  margin: 0 0 12px;
+  color: var(--rp-c-text-2);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+.devpulse-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.devpulse-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.devpulse-badge--lifecycle {
+  color: var(--rp-c-text-1);
+  background: var(--rp-c-bg-mute);
+}
+.devpulse-badge--stale {
+  color: var(--devpulse-warning);
+  background: var(--devpulse-warning-bg);
+}
+.devpulse-card__meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 12px;
+  margin: 0;
+  font-size: 0.875rem;
+}
+.devpulse-card__meta dt {
+  color: var(--rp-c-text-2);
+}
+.devpulse-card__meta dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.devpulse-card__empty {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8125rem;
+  color: var(--rp-c-text-2);
+}
+.devpulse-deadline--overdue {
+  color: var(--devpulse-stalled);
+  font-weight: 600;
+}
+.devpulse-deadline--due_soon {
+  color: var(--devpulse-warning);
+  font-weight: 600;
+}
+
+/* ゲージ: 長さ = Progress、色 = Health */
+.devpulse-gauge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.devpulse-gauge__track {
+  flex: 1;
+  height: 10px;
+  overflow: hidden;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 999px;
+  background: var(--rp-c-bg-mute);
+}
+.devpulse-gauge__track--empty {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent 0 4px,
+    var(--rp-c-divider) 4px 8px
+  );
+}
+.devpulse-gauge__fill {
+  height: 100%;
+  background: var(--devpulse-fill-inactive);
+}
+.devpulse-gauge__fill.devpulse-tone--stable {
+  background: var(--devpulse-fill-stable);
+}
+.devpulse-gauge__fill.devpulse-tone--warning {
+  background: var(--devpulse-fill-warning);
+}
+.devpulse-gauge__fill.devpulse-tone--stalled {
+  background: var(--devpulse-fill-stalled);
+}
+.devpulse-gauge__fill.devpulse-tone--unknown {
+  background: var(--devpulse-fill-unknown);
+}
+.devpulse-gauge__value {
+  min-width: 3.5ch;
+  font-weight: 700;
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .devpulse-dashboard {
+    padding: 24px 16px 32px;
+  }
+  .devpulse-card__meta {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+  .devpulse-card__meta dd {
+    margin-bottom: 8px;
+  }
+}
