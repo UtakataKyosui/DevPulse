@@ -1,0 +1,6 @@
+[
+  { "type": "dir", "name": "devpulse" },
+  { "type": "dir", "name": "sample-empty" },
+  { "type": "dir", "name": "sample-closed" },
+  { "type": "dir", "name": "sample-unselected" }
+]

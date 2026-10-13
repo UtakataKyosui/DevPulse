@@ -315,3 +315,13 @@
 .devpulse-load--error {
   border-color: var(--rp-c-brand);
 }
+
+.devpulse-detail__list {
+  padding-left: 1.25em;
+}
+
+.devpulse-detail__note,
+.devpulse-detail__unavailable {
+  font-size: 14px;
+  color: var(--rp-c-text-2);
+}
