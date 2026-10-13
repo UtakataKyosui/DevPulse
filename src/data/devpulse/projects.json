@@ -1,0 +1,80 @@
+{
+  "projects": [
+    {
+      "id": "devpulse",
+      "slug": "devpulse",
+      "name": "DevPulse",
+      "description": "全然開発が進まないのを人に監視してもらうことにしました...",
+      "repository": "UtakataKyosui/DevPulse",
+      "published": true,
+      "lifecycle": "active"
+    },
+    {
+      "id": "lifeboard",
+      "slug": "lifeboard",
+      "name": "LifeBoard",
+      "description": "生活タスクと生活習慣の管理のためのアプリケーション with AI",
+      "repository": "UtakataKyosui/LifeBoard",
+      "published": true,
+      "lifecycle": "active"
+    },
+    {
+      "id": "astro-portfolio-with-blog",
+      "slug": "astro-portfolio-with-blog",
+      "name": "astro-portfolio-with-blog",
+      "description": "Astroで開発したPortfolio兼Blog",
+      "repository": "UtakataKyosui/astro-portfolio-with-blog",
+      "published": true,
+      "lifecycle": "active",
+      "featuredMilestoneNumber": 1
+    },
+    {
+      "id": "gh-extension-template",
+      "slug": "gh-extension-template",
+      "name": "gh-extension-template",
+      "description": "gh拡張機能を開発するためのテンプレートリポジトリ",
+      "repository": "UtakataKyosui/gh-extension-template",
+      "published": true,
+      "lifecycle": "active",
+      "featuredMilestoneNumber": 1
+    },
+    {
+      "id": "axvern",
+      "slug": "axvern",
+      "name": "axvern",
+      "description": "",
+      "repository": "UtakataKyosui/axvern",
+      "published": true,
+      "lifecycle": "active",
+      "featuredMilestoneNumber": 1
+    },
+    {
+      "id": "daily-reflection-system",
+      "slug": "daily-reflection-system",
+      "name": "daily-reflection-system",
+      "description": "その日の振り返りを行うためのシステム",
+      "repository": "UtakataKyosui/daily-reflection-system",
+      "published": true,
+      "lifecycle": "active"
+    },
+    {
+      "id": "repositories-manage",
+      "slug": "repositories-manage",
+      "name": "repositories-manage",
+      "description": "リポジトリ管理用システムの作成（重複だのの回避のため）",
+      "repository": "UtakataKyosui/repositories-manage",
+      "published": true,
+      "lifecycle": "active"
+    },
+    {
+      "id": "gh-scaffold",
+      "slug": "gh-scaffold",
+      "name": "gh-scaffold",
+      "description": "デフォルトIssueテンプレートとPRテンプレートをAgentに使わせるgh拡張機能",
+      "repository": "UtakataKyosui/gh-scaffold",
+      "published": true,
+      "lifecycle": "active",
+      "featuredMilestoneNumber": 1
+    }
+  ]
+}

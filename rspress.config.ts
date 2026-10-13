@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import { defineConfig } from '@rspress/core';
-import projectsJson from './src/data/devpulse/projects.sample.json';
-import snapshotsJson from './src/data/devpulse/snapshots.sample.json';
+import projectsJson from './src/data/devpulse/projects.json';
+import snapshotsJson from './src/data/devpulse/snapshots.json';
 import {
   projectConfigSchema,
   selectPublicData,
@@ -31,7 +31,7 @@ export default defineConfig({
       define: {
         __DEVPULSE_BUILD_TIME__: JSON.stringify(DEVPULSE_BUILD_TIME),
         __DEVPULSE_API_URL__: JSON.stringify(
-          process.env.DEVPULSE_API_URL ?? '',
+          process.env.DEVPULSE_API_URL ?? '/api',
         ),
         __DEVPULSE_PUBLIC_DATA__: JSON.stringify(DEVPULSE_PUBLIC_DATA),
       },
