@@ -1,7 +1,8 @@
 import * as path from 'node:path';
+import { pluginTailwindcss } from '@rsbuild/plugin-tailwindcss';
 import { defineConfig } from '@rspress/core';
-import projectsJson from './src/data/devpulse/projects.sample.json';
-import snapshotsJson from './src/data/devpulse/snapshots.sample.json';
+import projectsJson from './src/data/devpulse/projects.json';
+import snapshotsJson from './src/data/devpulse/snapshots.json';
 import {
   projectConfigSchema,
   selectPublicData,
@@ -19,19 +20,21 @@ const DEVPULSE_PUBLIC_DATA = selectPublicData(
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
-  lang: 'en',
-  title: 'My Site',
+  globalStyles: path.join(__dirname, 'tailwind.css'),
+  lang: 'ja',
+  title: 'DevPulse',
   icon: '/rspress-icon.png',
   logo: {
     light: '/rspress-light-logo.png',
     dark: '/rspress-dark-logo.png',
   },
   builderConfig: {
+    plugins: [pluginTailwindcss()],
     source: {
       define: {
         __DEVPULSE_BUILD_TIME__: JSON.stringify(DEVPULSE_BUILD_TIME),
         __DEVPULSE_API_URL__: JSON.stringify(
-          process.env.DEVPULSE_API_URL ?? '',
+          process.env.DEVPULSE_API_URL ?? '/api',
         ),
         __DEVPULSE_PUBLIC_DATA__: JSON.stringify(DEVPULSE_PUBLIC_DATA),
       },

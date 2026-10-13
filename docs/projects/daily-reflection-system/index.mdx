@@ -1,0 +1,44 @@
+---
+title: "daily-reflection-system"
+description: "その日の振り返りを行うためのシステム"
+---
+
+import { IssueThroughput, MilestoneList, NextActions, ProjectDetail, ProjectOverview, ProjectStatus, RecentActivity } from '../../../src/components/devpulse/ProjectDetail.tsx';
+
+# daily-reflection-system
+
+<ProjectDetail slug="daily-reflection-system">
+
+## 概要
+
+<ProjectOverview />
+
+## 目的
+
+日々のタスク、開発活動、振り返りを一緒に扱い、その日の行動を見直せるようにします。分かれていた日報 CLI、ターミナル UI、Agent 向けの仕組みを統合します。
+
+## 目指す姿
+
+GitHub の活動を取り込み、予定の作成、タスク管理、振り返り、ログの閲覧・編集を CLI と TUI から行えるシステムを目指します。共通のデータモデルと JSON 契約を使い、Agent のワークフローからも日次ログを扱えるようにします。
+
+## 現在地
+
+<ProjectStatus />
+
+## Milestones
+
+<MilestoneList />
+
+## Issue 進捗
+
+<IssueThroughput />
+
+## 最近の活動
+
+<RecentActivity />
+
+## 次にやること
+
+<NextActions />
+
+</ProjectDetail>
