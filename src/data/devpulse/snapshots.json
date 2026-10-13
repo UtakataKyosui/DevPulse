@@ -1,0 +1,303 @@
+{
+  "snapshots": [
+    {
+      "repository": "UtakataKyosui/DevPulse",
+      "visibility": "public",
+      "lastActivityAt": "2026-10-13T12:51:02Z",
+      "fetchedAt": "2026-10-13T14:24:14Z",
+      "issueClosures": [
+        {
+          "number": 13,
+          "closedAt": "2026-10-13T12:51:04Z",
+          "isPullRequest": true
+        },
+        {
+          "number": 12,
+          "closedAt": "2026-10-13T12:51:03Z",
+          "isPullRequest": true
+        },
+        {
+          "number": 10,
+          "closedAt": "2026-10-13T10:49:03Z",
+          "isPullRequest": true
+        },
+        {
+          "number": 9,
+          "closedAt": "2026-10-13T10:49:02Z",
+          "isPullRequest": true
+        },
+        {
+          "number": 8,
+          "closedAt": "2026-10-13T10:49:01Z",
+          "isPullRequest": true
+        },
+        {
+          "number": 6,
+          "closedAt": "2026-10-13T12:51:05Z",
+          "isPullRequest": false
+        },
+        {
+          "number": 5,
+          "closedAt": "2026-10-13T10:49:05Z",
+          "isPullRequest": false
+        },
+        {
+          "number": 4,
+          "closedAt": "2026-10-13T10:49:04Z",
+          "isPullRequest": false
+        },
+        {
+          "number": 3,
+          "closedAt": "2026-10-13T10:49:03Z",
+          "isPullRequest": false
+        },
+        {
+          "number": 2,
+          "closedAt": "2026-10-13T12:51:04Z",
+          "isPullRequest": false
+        }
+      ],
+      "milestones": []
+    },
+    {
+      "repository": "UtakataKyosui/LifeBoard",
+      "visibility": "public",
+      "lastActivityAt": "2026-10-13T08:37:34Z",
+      "fetchedAt": "2026-10-13T14:24:14Z",
+      "issueClosures": [
+        {
+          "number": 32,
+          "closedAt": "2026-10-13T08:37:35Z",
+          "isPullRequest": true
+        },
+        {
+          "number": 31,
+          "closedAt": "2026-10-11T05:59:46Z",
+          "isPullRequest": true
+        }
+      ],
+      "milestones": []
+    },
+    {
+      "repository": "UtakataKyosui/astro-portfolio-with-blog",
+      "visibility": "public",
+      "lastActivityAt": "2026-10-13T07:11:13Z",
+      "fetchedAt": "2026-10-13T14:24:14Z",
+      "issueClosures": [
+        {
+          "number": 31,
+          "closedAt": "2026-10-13T07:11:13Z",
+          "isPullRequest": true
+        }
+      ],
+      "milestones": [
+        {
+          "number": 1,
+          "title": "MVP v0.1",
+          "description": "Home と /works を静的サイトとして公開し、Knowledge Graph でノード選択・関連強調・詳細表示ができる状態。Epic: Foundation / Content / Experience / Release。",
+          "state": "open",
+          "openIssues": 25,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/astro-portfolio-with-blog/milestone/1"
+        },
+        {
+          "number": 2,
+          "title": "Post-MVP: Blog / CMS",
+          "description": "MVP 公開後の拡張。Blog・RSS、暫定 Headless CMS、自作 CMS、Graph Renderer の高度化。",
+          "state": "open",
+          "openIssues": 5,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/astro-portfolio-with-blog/milestone/2"
+        }
+      ]
+    },
+    {
+      "repository": "UtakataKyosui/gh-extension-template",
+      "visibility": "public",
+      "lastActivityAt": "2026-10-13T06:36:22Z",
+      "fetchedAt": "2026-10-13T14:24:14Z",
+      "issueClosures": [
+        {
+          "number": 43,
+          "closedAt": "2026-10-13T06:36:22Z",
+          "isPullRequest": true
+        },
+        {
+          "number": 17,
+          "closedAt": "2026-10-12T02:02:58Z",
+          "isPullRequest": true
+        }
+      ],
+      "milestones": [
+        {
+          "number": 1,
+          "title": "MVP",
+          "description": "requirements の MVP（Must）を満たす実装と仕様の確定",
+          "state": "open",
+          "openIssues": 37,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/gh-extension-template/milestone/1"
+        },
+        {
+          "number": 2,
+          "title": "Post-MVP",
+          "description": "Should / Could の検討・実装",
+          "state": "open",
+          "openIssues": 0,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/gh-extension-template/milestone/2"
+        },
+        {
+          "number": 3,
+          "title": "公開前検証",
+          "description": "差別化の実証・OSS帰属・外部仕様適合の検証",
+          "state": "open",
+          "openIssues": 0,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/gh-extension-template/milestone/3"
+        }
+      ]
+    },
+    {
+      "repository": "UtakataKyosui/axvern",
+      "visibility": "public",
+      "lastActivityAt": "2026-10-13T05:47:31Z",
+      "fetchedAt": "2026-10-13T14:24:14Z",
+      "issueClosures": [
+        {
+          "number": 58,
+          "closedAt": "2026-10-13T05:47:32Z",
+          "isPullRequest": true
+        }
+      ],
+      "milestones": [
+        {
+          "number": 1,
+          "title": "v0.1 — Execute",
+          "description": "実行基盤・Policy・診断。AC-01〜07、AC-13〜15。query/recall・調査は含めない。",
+          "state": "open",
+          "openIssues": 20,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/axvern/milestone/1"
+        },
+        {
+          "number": 2,
+          "title": "v0.2 — Discover",
+          "description": "fs/code調査・fs analyze。AC-16〜24と定義補完後のAC-27〜30/32。独自結果検索はv0.3。",
+          "state": "open",
+          "openIssues": 14,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/axvern/milestone/2"
+        },
+        {
+          "number": 3,
+          "title": "v0.3 — Retrieve",
+          "description": "保存ログのquery/recall、欠損・保持・出力上限。AC-08〜12、定義補完後のAC-31。",
+          "state": "open",
+          "openIssues": 8,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/axvern/milestone/3"
+        },
+        {
+          "number": 4,
+          "title": "v0.4+ — Optimize",
+          "description": "安全な反復計測、ベースライン比較、プロファイラ検証。AC-PERF-01〜04。",
+          "state": "open",
+          "openIssues": 9,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/axvern/milestone/4"
+        },
+        {
+          "number": 5,
+          "title": "v0.2+ — Optional adapters",
+          "description": "git+delta/dust/procsの任意拡張。v0.2の必須リリースゲートから分離。実装時期は未確約。",
+          "state": "open",
+          "openIssues": 4,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/axvern/milestone/5"
+        },
+        {
+          "number": 6,
+          "title": "Future — Scope decisions",
+          "description": "書込み・削除・通信・TUI・ビルド解析の適合性判断。実装や公開の確約ではない。",
+          "state": "open",
+          "openIssues": 2,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/axvern/milestone/6"
+        }
+      ]
+    },
+    {
+      "repository": "UtakataKyosui/daily-reflection-system",
+      "visibility": "public",
+      "lastActivityAt": "2026-10-12T05:34:24Z",
+      "fetchedAt": "2026-10-13T14:24:14Z",
+      "issueClosures": [],
+      "milestones": []
+    },
+    {
+      "repository": "UtakataKyosui/repositories-manage",
+      "visibility": "public",
+      "lastActivityAt": "2026-10-12T01:42:31Z",
+      "fetchedAt": "2026-10-13T14:24:14Z",
+      "issueClosures": [],
+      "milestones": []
+    },
+    {
+      "repository": "UtakataKyosui/gh-scaffold",
+      "visibility": "public",
+      "lastActivityAt": "2026-10-11T06:37:29Z",
+      "fetchedAt": "2026-10-13T14:24:14Z",
+      "issueClosures": [
+        {
+          "number": 12,
+          "closedAt": "2026-10-11T06:37:29Z",
+          "isPullRequest": true
+        }
+      ],
+      "milestones": [
+        {
+          "number": 1,
+          "title": "v0.1.0",
+          "description": "Portable Defaults: 内蔵Issue・PRテンプレート、取得元の解決、対話編集、投稿・取消・dry-run、CIとGitHub CLI Extension配布。Epic #1と実装Issue #2〜#8で追跡する。",
+          "state": "open",
+          "openIssues": 8,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/gh-scaffold/milestone/1"
+        },
+        {
+          "number": 2,
+          "title": "v0.2.0",
+          "description": "Personal Workflow: XDG準拠の個人設定、ユーザー定義テンプレート、カスタマイズ、取得元の優先順位設定、変数展開。Issue #9で追跡する。",
+          "state": "open",
+          "openIssues": 1,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/gh-scaffold/milestone/2"
+        },
+        {
+          "number": 3,
+          "title": "v0.3.0",
+          "description": "Agent-Friendly Workflow: 非対話モード、本文の標準出力、JSON出力、Agent Skillと外部AIによる本文生成ワークフロー。Issue #10・#11で追跡する。",
+          "state": "open",
+          "openIssues": 2,
+          "closedIssues": 0,
+          "dueOn": null,
+          "htmlUrl": "https://github.com/UtakataKyosui/gh-scaffold/milestone/3"
+        }
+      ]
+    }
+  ]
+}

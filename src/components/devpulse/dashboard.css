@@ -271,22 +271,6 @@
     var(--rp-c-divider) 4px 8px
   );
 }
-.devpulse-gauge__fill {
-  height: 100%;
-  background: var(--devpulse-fill-inactive);
-}
-.devpulse-gauge__fill.devpulse-tone--stable {
-  background: var(--devpulse-fill-stable);
-}
-.devpulse-gauge__fill.devpulse-tone--warning {
-  background: var(--devpulse-fill-warning);
-}
-.devpulse-gauge__fill.devpulse-tone--stalled {
-  background: var(--devpulse-fill-stalled);
-}
-.devpulse-gauge__fill.devpulse-tone--unknown {
-  background: var(--devpulse-fill-unknown);
-}
 .devpulse-gauge__value {
   min-width: 3.5ch;
   font-weight: 700;
@@ -306,20 +290,59 @@
   }
 }
 
-.devpulse-load {
-  margin: 0 0 12px;
-  padding: 8px 12px;
-  border: 1px solid var(--rp-c-divider);
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-.devpulse-load--error {
-  border-color: var(--rp-c-brand);
-}
-
 .devpulse-detail__list {
   padding-left: 1.25em;
+}
+
+.devpulse-card__milestones {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rp-c-divider);
+}
+
+.devpulse-card__milestones h4 {
+  margin: 0 0 12px;
+}
+
+.devpulse-milestone-gauge__track {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  display: flex;
+  gap: 4px;
+  height: 20px;
+}
+
+.devpulse-milestone-gauge__segment {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 3px;
+  background: var(--rp-c-bg-mute);
+}
+
+.devpulse-milestone-gauge__segment .devpulse-gauge__fill {
+  display: block;
+}
+
+.devpulse-milestone-gauge__segment:focus-visible {
+  outline: 2px solid var(--rp-c-brand);
+  outline-offset: 2px;
+}
+
+.devpulse-milestone-gauge__labels {
+  margin: 0;
+  padding-left: 1.5em;
+}
+
+.devpulse-milestone-gauge__labels li {
+  margin-bottom: 8px;
+}
+
+.devpulse-milestone-gauge__labels strong {
+  margin-left: 8px;
 }
 
 .devpulse-detail__note,
@@ -333,4 +356,71 @@
   max-width: none;
   margin: 0;
   padding: 0;
+}
+
+.devpulse-detail h2 {
+  margin-top: 24px;
+  margin-bottom: 12px;
+  padding-top: 0;
+  font-size: 20px;
+}
+
+.devpulse-detail__status {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr);
+  gap: 8px 12px;
+  font-size: 14px;
+}
+
+.devpulse-detail__summary {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.devpulse-detail__summary small {
+  margin-left: 8px;
+  color: var(--rp-c-text-2);
+}
+
+@media (max-width: 640px) {
+  .devpulse-detail__status {
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
+
+  .devpulse-detail__status dd {
+    margin-bottom: 0;
+  }
+}
+
+/* shadcn primitives inherit Rspress colors; health stays independent of progress. */
+.devpulse-progress--stable {
+  --color-primary: var(--devpulse-fill-stable);
+}
+.devpulse-progress--warning {
+  --color-primary: var(--devpulse-fill-warning);
+}
+.devpulse-progress--stalled {
+  --color-primary: var(--devpulse-fill-stalled);
+}
+.devpulse-progress--unknown {
+  --color-primary: var(--devpulse-fill-unknown);
+}
+.devpulse-progress--inactive {
+  --color-primary: var(--devpulse-fill-inactive);
+}
+
+:where(.devpulse-detail) [data-slot="table"] {
+  display: table;
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+}
+:where(.devpulse-detail) [data-slot="table-head"],
+:where(.devpulse-detail) [data-slot="table-cell"] {
+  border: 0;
+  padding: 8px 12px;
+}
+:where(.devpulse-detail) [data-slot="table-row"] {
+  background: transparent;
+  border-bottom: 1px solid var(--rp-c-divider);
 }

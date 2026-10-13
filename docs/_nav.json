@@ -8,14 +8,5 @@
     "text": "Projects",
     "link": "/projects/devpulse/",
     "activeMatch": "/projects/"
-  },
-  {
-    "text": "API",
-    "link": "/api/",
-    "activeMatch": "/api/"
-  },
-  {
-    "text": "Document",
-    "link": "https://rspress.rs/"
   }
 ]
