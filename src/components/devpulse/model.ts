@@ -117,10 +117,12 @@ function describeProgress(
         'Issue消化率: 未算出。ゲージの長さは進捗、色はActivity Healthを表します',
     };
   }
+  // 未完了(100 未満)を 100% と誤表示しない
+  const rounded = percent < 100 ? Math.min(Math.round(percent), 99) : 100;
   return {
     percent,
-    text: `${percent}%`,
-    ariaLabel: `Issue消化率 ${percent}%(ゲージの長さ)。ゲージの色は進捗ではなくActivity Health: ${healthLabel}`,
+    text: `${rounded}%`,
+    ariaLabel: `Issue消化率 ${rounded}%(ゲージの長さ)。ゲージの色は進捗ではなくActivity Health: ${healthLabel}`,
   };
 }
 

@@ -1,4 +1,8 @@
-export { buildProjectViews, toPublicView } from './build-views.ts';
+export {
+  buildProjectViews,
+  selectPublicData,
+  toPublicView,
+} from './build-views.ts';
 export {
   assessDeadline,
   DEFAULT_DUE_SOON_DAYS,

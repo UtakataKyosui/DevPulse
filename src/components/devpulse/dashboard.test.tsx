@@ -124,6 +124,22 @@ describe('表示モデル', () => {
     expect(full.progress.text).toBe('100%');
   });
 
+  it('割り切れない消化率は整数に丸めて表示する', () => {
+    const third = card(
+      make({ milestones: [milestone({ openIssues: 2, closedIssues: 1 })] }),
+    );
+    expect(third.progress.text).toBe('33%');
+    expect(third.progress.ariaLabel).toContain('33%');
+    expect(third.progress.ariaLabel).not.toContain('33.3');
+  });
+
+  it('100% 未満を丸めで 100% と表示しない', () => {
+    const almost = card(
+      make({ milestones: [milestone({ openIssues: 1, closedIssues: 999 })] }),
+    );
+    expect(almost.progress.text).toBe('99%');
+  });
+
   it('activeで5日以上Commitが無ければ停滞', () => {
     expect(
       card(make({ lastActivityAt: '2026-10-08T00:00:00Z' })).health.tone,
