@@ -23,11 +23,8 @@ export default defineConfig({
   globalStyles: path.join(__dirname, 'tailwind.css'),
   lang: 'ja',
   title: 'DevPulse',
-  icon: '/rspress-icon.png',
-  logo: {
-    light: '/rspress-light-logo.png',
-    dark: '/rspress-dark-logo.png',
-  },
+  icon: '/utakata-icon.webp',
+  logo: '/utakata-icon.webp',
   builderConfig: {
     plugins: [pluginTailwindcss()],
     source: {
