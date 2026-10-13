@@ -34,7 +34,7 @@ progressPercent = closedIssues / (openIssues + closedIssues) * 100
 
 - `published: true` のプロジェクトだけが表示データに含まれます。
 - スナップショットの `visibility` が `public` でない(private)リポジトリは出力しません。
-- スナップショットが無い(同期未実施・取得失敗)場合、プロジェクトは含まれますが `snapshot: null`、`progressPercent: null`、`health.status: 'unknown'`(`freshness.stale: true`)になります。`visibility` は公開前検証用で、`toPublicView` が出力から除去します。
+- 公開状態を検証できないプロジェクト(スナップショットが無い: 同期未実施・取得失敗)は、private の可能性があるため出力しません。リポジトリは大文字小文字を区別せず照合します。`visibility` は公開前検証用で、`toPublicView` が出力から除去します。
 - GitHub のアクセストークンは成果物・クライアントに出力しません。正規化は未知のフィールドを破棄します。
 
 ## 主な API

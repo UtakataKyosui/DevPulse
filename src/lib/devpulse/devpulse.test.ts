@@ -112,14 +112,32 @@ describe('buildProjectViews', () => {
     expect(v?.progressPercent).toBe(75);
     expect(v?.snapshot?.milestones[0].state).toBe('closed');
   });
-  it('yields null progress and unknown health when snapshot is missing', () => {
-    const v = view('sample-unsynced');
-    expect(v).toBeDefined();
-    expect(v?.snapshot).toBeNull();
-    expect(v?.progressPercent).toBeNull();
-    expect(v?.health.status).toBe('unknown');
-    expect(v?.freshness.stale).toBe(true);
-    expect(v?.throughput.totalClosed).toBe(0);
+  it('excludes a published project whose visibility is unverified (no snapshot)', () => {
+    expect(view('sample-unsynced')).toBeUndefined();
+    const definition: ProjectDefinition = {
+      ...config.projects[0],
+      repository: 'example/unsynced',
+    };
+    expect(buildProjectViews([definition], [], { now: NOW })).toEqual([]);
+  });
+  it('matches repositories case-insensitively', () => {
+    const definition: ProjectDefinition = {
+      ...config.projects[0],
+      repository: 'utakatakyosui/devpulse',
+    };
+    const [v] = buildProjectViews([definition], snapshots, { now: NOW });
+    expect(v.progressPercent).toBe(25);
+  });
+  it('still excludes a private snapshot whose casing differs', () => {
+    const definition: ProjectDefinition = {
+      ...config.projects[0],
+      repository: 'utakatakyosui/devpulse',
+    };
+    const priv: GitHubProjectSnapshot = {
+      ...snapshots[0],
+      visibility: 'private',
+    };
+    expect(buildProjectViews([definition], [priv], { now: NOW })).toEqual([]);
   });
   it('excludes published:false and private repositories', () => {
     expect(view('sample-draft')).toBeUndefined();
@@ -141,6 +159,24 @@ describe('buildProjectViews', () => {
         definition: expect.objectContaining({ id: 'devpulse' }),
       }),
     );
+  });
+});
+
+describe('projectConfigSchema duplicates', () => {
+  it('rejects repositories that differ only by case', () => {
+    const [first] = config.projects;
+    const result = projectConfigSchema.safeParse({
+      projects: [
+        first,
+        {
+          ...first,
+          id: 'other',
+          slug: 'other',
+          repository: first.repository.toUpperCase(),
+        },
+      ],
+    });
+    expect(result.success).toBe(false);
   });
 });
 

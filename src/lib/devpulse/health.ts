@@ -21,6 +21,9 @@ export function calcElapsedDays(
   now: Date,
 ): number | null {
   if (!lastActivityAt) return null;
+  // 同一 JST 暦日内の未来時刻は暦日差が 0 になるため、時刻そのものを先に比較する
+  const last = Date.parse(lastActivityAt);
+  if (Number.isNaN(last) || last > now.getTime()) return null;
   const days = jstCalendarDayDiff(lastActivityAt, now);
   return days === null || days < 0 ? null : days;
 }

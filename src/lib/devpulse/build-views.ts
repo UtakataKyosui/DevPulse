@@ -2,6 +2,7 @@ import { assessDeadline, DEFAULT_DUE_SOON_DAYS } from './deadline.ts';
 import { assessFreshness, DEFAULT_STALE_AFTER_HOURS } from './freshness.ts';
 import { assessHealth } from './health.ts';
 import { calcProgressPercent } from './progress.ts';
+import { repositoryKey } from './repository-key.ts';
 import { selectFeaturedMilestone } from './select-milestone.ts';
 import { calcIssueThroughput } from './throughput.ts';
 import type {
@@ -20,8 +21,9 @@ export interface BuildViewsOptions {
 /**
  * 公開対象の ProjectView だけを返す。
  * - published: true のみ
- * - snapshot が private(または別リポジトリ)なら出力しない
- * - snapshot が無い(取得失敗/未同期)場合は progress null・health unknown・freshness stale
+ * - 公開状態を検証できた(public な snapshot がある)ものだけ出力する。
+ *   snapshot が無い(未同期/取得失敗)private かもしれない定義は出力しない
+ * - リポジトリは大文字小文字を区別せず照合する
  */
 export function buildProjectViews(
   definitions: ProjectDefinition[],
@@ -29,13 +31,15 @@ export function buildProjectViews(
   options: BuildViewsOptions,
 ): ProjectView[] {
   const { now } = options;
-  const byRepo = new Map(snapshots.map((s) => [s.repository, s]));
+  const byRepo = new Map(
+    snapshots.map((s) => [repositoryKey(s.repository), s]),
+  );
   const views: ProjectView[] = [];
 
   for (const definition of definitions) {
     if (!definition.published) continue;
-    const snapshot = byRepo.get(definition.repository) ?? null;
-    if (snapshot && snapshot.visibility !== 'public') continue;
+    const snapshot = byRepo.get(repositoryKey(definition.repository));
+    if (snapshot?.visibility !== 'public') continue;
 
     const milestone = selectFeaturedMilestone(definition, snapshot);
     views.push({
@@ -44,17 +48,17 @@ export function buildProjectViews(
       progressPercent: milestone ? calcProgressPercent(milestone) : null,
       health: assessHealth({
         lifecycle: definition.lifecycle,
-        lastActivityAt: snapshot?.lastActivityAt ?? null,
+        lastActivityAt: snapshot.lastActivityAt,
         now,
       }),
-      throughput: calcIssueThroughput(snapshot?.issueClosures ?? [], now),
+      throughput: calcIssueThroughput(snapshot.issueClosures, now),
       deadline: assessDeadline(
         milestone,
         now,
         options.dueSoonDays ?? DEFAULT_DUE_SOON_DAYS,
       ),
       freshness: assessFreshness(
-        snapshot?.fetchedAt ?? null,
+        snapshot.fetchedAt,
         now,
         options.staleAfterHours ?? DEFAULT_STALE_AFTER_HOURS,
       ),
