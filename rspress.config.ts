@@ -1,3 +1,4 @@
+import { readFileSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { pluginTailwindcss } from '@rsbuild/plugin-tailwindcss';
 import { defineConfig } from '@rspress/core';
@@ -8,6 +9,7 @@ import {
   selectPublicData,
   snapshotFileSchema,
 } from './src/lib/devpulse/index.ts';
+import { buildProjectSidebar } from './src/lib/devpulse/project-sidebar.ts';
 
 // ビルド 1 回につき 1 度だけ評価され、SSG とクライアントの双方に同じ値が埋め込まれる(hydration 不整合の防止)
 const DEVPULSE_BUILD_TIME = new Date().toISOString();
@@ -17,6 +19,13 @@ const DEVPULSE_PUBLIC_DATA = selectPublicData(
   projectConfigSchema.parse(projectsJson).projects,
   snapshotFileSchema.parse(snapshotsJson).snapshots,
 );
+
+// lifecycle を変更したら dev 起動・ビルド時にサイドバーも更新する。
+const projectMetaPath = path.join(__dirname, 'docs/projects/_meta.json');
+const projectMeta = `${JSON.stringify(buildProjectSidebar(DEVPULSE_PUBLIC_DATA.projects), null, 2)}\n`;
+if (readFileSync(projectMetaPath, 'utf8') !== projectMeta) {
+  writeFileSync(projectMetaPath, projectMeta);
+}
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
