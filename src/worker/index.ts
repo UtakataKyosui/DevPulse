@@ -165,11 +165,11 @@ export default {
       await syncSnapshots(env, fetch, now);
       await generateDailyReport(env, now, previousReportDate(now), false);
     } else {
-      // The daily trigger owns the 09:00 JST refresh to avoid duplicate GitHub requests.
-      if (now.getUTCHours() === 0) return;
+      // The daily trigger owns the 21:00 JST refresh to avoid duplicate GitHub requests.
+      if (now.getUTCHours() === 12) return;
       await syncSnapshots(env, fetch, now);
-      // Retry today's report after 09:00 JST, bounded to three AI attempts by D1.
-      if (now.getUTCHours() < 15)
+      // Retry after 21:00 JST until the target JST day changes, bounded to three attempts.
+      if (now.getUTCHours() >= 12 && now.getUTCHours() < 15)
         await generateDailyReport(env, now, previousReportDate(now), false);
     }
   },

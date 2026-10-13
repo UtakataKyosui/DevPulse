@@ -14,7 +14,7 @@ import {
 import { ReportStore } from './report-store.ts';
 import { type Env, SNAPSHOT_KEY, syncSnapshots } from './sync.ts';
 
-export const DAILY_REPORT_CRON = '0 0 * * *';
+export const DAILY_REPORT_CRON = '0 12 * * *';
 export const REPORT_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const settingsSchema = z.object({
   model: z.enum([REPORT_MODEL, '@cf/meta/llama-3.1-8b-instruct']),

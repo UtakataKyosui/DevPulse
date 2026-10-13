@@ -62,7 +62,7 @@ development, set `DEVPULSE_API_URL=''` when running `pnpm dev`.
 
 ## Daily AI reports and RSS
 
-The Worker generates a Japanese report at **09:00 JST** (`0 0 * * *`, UTC)
+The Worker generates a Japanese report at **21:00 JST** (`0 12 * * *`, UTC)
 for the previous JST calendar day. Issue closure counts exclude PRs and use
 the half-open interval 00:00–next-day 00:00. Milestone progress, health and
 deadlines describe the capture time, rather than historical day-end state.
@@ -83,7 +83,7 @@ pricing/availability before enabling production inference:
 `REPORTS` is a D1 database provisioned by `cf`, with an idempotent table
 initialization in the Worker. A unique date and a 10-minute fenced lease
 serialize generation. A day gets up to three automatic attempts, including
-hourly recovery after 09:00 JST. Captured inputs survive inference failure;
+hourly recovery at 22:00 and 23:00 JST. Captured inputs survive inference failure;
 completed reports never invoke AI again. Stored reports retain their URL,
 GUID, publication timestamp and model metadata on every rebuild. D1 retains
 all reports and captures without automatic expiration; the export supports
@@ -110,7 +110,7 @@ The RSS contains the latest 30 available reports.
    Run **Publish daily reports** manually after the first report is generated.
 
 The workflow runs at minute 15 of every hour: normal publication starts at
-09:15 JST, and later runs recover failed builds/deployments and remove
+21:15 JST, and later runs recover failed builds/deployments and remove
 withdrawn content. GitHub schedules may be delayed; this is not an exact
 delivery-time guarantee. It fetches all saved reports, builds Rspress, checks
 a dry-run, deploys, verifies the public feed matches the build, and only then
