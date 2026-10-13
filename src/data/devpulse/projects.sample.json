@@ -1,0 +1,73 @@
+{
+  "projects": [
+    {
+      "id": "devpulse",
+      "slug": "devpulse",
+      "name": "DevPulse",
+      "description": "GitHub Milestones を正本とする開発進捗ダッシュボード",
+      "repository": "UtakataKyosui/DevPulse",
+      "published": true,
+      "lifecycle": "active",
+      "featuredMilestoneNumber": 1
+    },
+    {
+      "id": "sample-empty",
+      "slug": "sample-empty",
+      "name": "Sample Empty",
+      "description": "Issue 件数 0 の Milestone を持つサンプル",
+      "repository": "example/empty",
+      "published": true,
+      "lifecycle": "planned",
+      "featuredMilestoneNumber": 1
+    },
+    {
+      "id": "sample-closed",
+      "slug": "sample-closed",
+      "name": "Sample Closed",
+      "description": "閉じた Milestone に未完了 Issue が残るサンプル",
+      "repository": "example/closed",
+      "published": true,
+      "lifecycle": "completed",
+      "featuredMilestoneNumber": 2
+    },
+    {
+      "id": "sample-unselected",
+      "slug": "sample-unselected",
+      "name": "Sample Unselected",
+      "description": "featuredMilestoneNumber 未設定のサンプル",
+      "repository": "example/unselected",
+      "published": true,
+      "lifecycle": "paused"
+    },
+    {
+      "id": "sample-unsynced",
+      "slug": "sample-unsynced",
+      "name": "Sample Unsynced",
+      "description": "同期未実施(snapshot なし)のサンプル",
+      "repository": "example/unsynced",
+      "published": true,
+      "lifecycle": "active",
+      "featuredMilestoneNumber": 1
+    },
+    {
+      "id": "sample-draft",
+      "slug": "sample-draft",
+      "name": "Sample Draft",
+      "description": "published: false のため出力されない",
+      "repository": "example/draft",
+      "published": false,
+      "lifecycle": "active",
+      "featuredMilestoneNumber": 1
+    },
+    {
+      "id": "sample-private",
+      "slug": "sample-private",
+      "name": "Sample Private",
+      "description": "private リポジトリのため出力されない",
+      "repository": "example/private",
+      "published": true,
+      "lifecycle": "active",
+      "featuredMilestoneNumber": 1
+    }
+  ]
+}
