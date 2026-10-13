@@ -105,7 +105,7 @@ function formatElapsed(days: number): string {
   return days === 0 ? '今日' : `${days}日前`;
 }
 
-function describeProgress(
+export function describeProgress(
   percent: number | null,
   healthLabel: string,
 ): ProgressModel {

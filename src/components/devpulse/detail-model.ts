@@ -1,9 +1,16 @@
 import {
+  calcProgressPercent,
   type GitHubMilestoneSnapshot,
   type ProjectView,
   toJstDate,
 } from '../../lib/devpulse/index.ts';
-import { type CardModel, formatJstDateTime, toCardModel } from './model.ts';
+import {
+  type CardModel,
+  describeProgress,
+  formatJstDateTime,
+  type ProgressModel,
+  toCardModel,
+} from './model.ts';
 
 export interface MilestoneRow {
   number: number;
@@ -12,6 +19,7 @@ export interface MilestoneRow {
   featured: boolean;
   dueText: string;
   issueText: string;
+  progress: ProgressModel;
   href: string;
 }
 
@@ -55,6 +63,7 @@ const RECENT_CLOSURE_LIMIT = 5;
 function toMilestoneRow(
   m: GitHubMilestoneSnapshot,
   featuredNumber: number | undefined,
+  healthLabel: string,
 ): MilestoneRow {
   const due = m.dueOn ? toJstDate(m.dueOn) : null;
   return {
@@ -64,6 +73,7 @@ function toMilestoneRow(
     featured: m.number === featuredNumber,
     dueText: due ?? '期限なし',
     issueText: `未完了 ${m.openIssues} / 完了 ${m.closedIssues}`,
+    progress: describeProgress(calcProgressPercent(m), healthLabel),
     href: m.htmlUrl,
   };
 }
@@ -71,8 +81,9 @@ function toMilestoneRow(
 export function buildDetailModel(view: ProjectView): DetailModel {
   const { definition, snapshot, throughput } = view;
   const repositoryUrl = `https://github.com/${definition.repository}`;
+  const card = toCardModel(view);
   const milestones = (snapshot?.milestones ?? []).map((m) =>
-    toMilestoneRow(m, definition.featuredMilestoneNumber),
+    toMilestoneRow(m, definition.featuredMilestoneNumber, card.health.label),
   );
   const featured = snapshot?.milestones.find(
     (m) => m.number === definition.featuredMilestoneNumber,
@@ -114,7 +125,7 @@ export function buildDetailModel(view: ProjectView): DetailModel {
   }
 
   return {
-    card: toCardModel(view),
+    card,
     repositoryUrl,
     fetchedText: formatJstDateTime(view.freshness.fetchedAt),
     milestones,
