@@ -1,34 +1,42 @@
 [
   {
-    "type": "dir",
-    "name": "devpulse"
-  },
-  {
-    "type": "dir",
-    "name": "lifeboard"
-  },
-  {
-    "type": "dir",
-    "name": "astro-portfolio-with-blog"
-  },
-  {
-    "type": "dir",
-    "name": "gh-extension-template"
-  },
-  {
-    "type": "dir",
-    "name": "axvern"
-  },
-  {
-    "type": "dir",
-    "name": "daily-reflection-system"
-  },
-  {
-    "type": "dir",
-    "name": "repositories-manage"
-  },
-  {
-    "type": "dir",
-    "name": "gh-scaffold"
+    "type": "custom-link",
+    "label": "In Progress（開発中）",
+    "collapsible": true,
+    "collapsed": false,
+    "items": [
+      {
+        "label": "DevPulse",
+        "link": "/projects/devpulse/"
+      },
+      {
+        "label": "LifeBoard",
+        "link": "/projects/lifeboard/"
+      },
+      {
+        "label": "astro-portfolio-with-blog",
+        "link": "/projects/astro-portfolio-with-blog/"
+      },
+      {
+        "label": "gh-extension-template",
+        "link": "/projects/gh-extension-template/"
+      },
+      {
+        "label": "axvern",
+        "link": "/projects/axvern/"
+      },
+      {
+        "label": "daily-reflection-system",
+        "link": "/projects/daily-reflection-system/"
+      },
+      {
+        "label": "repositories-manage",
+        "link": "/projects/repositories-manage/"
+      },
+      {
+        "label": "gh-scaffold",
+        "link": "/projects/gh-scaffold/"
+      }
+    ]
   }
 ]
