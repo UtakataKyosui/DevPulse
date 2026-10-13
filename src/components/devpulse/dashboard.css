@@ -322,6 +322,14 @@
   padding-left: 1.25em;
 }
 
+.devpulse-milestones > li {
+  margin-bottom: 20px;
+}
+
+.devpulse-milestones .devpulse-gauge {
+  margin-top: 8px;
+}
+
 .devpulse-detail__note,
 .devpulse-detail__unavailable {
   font-size: 14px;

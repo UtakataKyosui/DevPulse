@@ -113,12 +113,13 @@ export function MilestoneList() {
     );
   }
   return (
-    <ul className="devpulse-detail__list">
+    <ul className="devpulse-detail__list devpulse-milestones">
       {model.milestones.map((m) => (
         <li key={m.number}>
           <a href={m.href}>{m.title}</a>
           {m.featured && ' (現在地)'} — {m.stateLabel} / 期限 {m.dueText} /{' '}
           {m.issueText}
+          <ProgressGauge progress={m.progress} tone={model.card.health.tone} />
         </li>
       ))}
     </ul>
