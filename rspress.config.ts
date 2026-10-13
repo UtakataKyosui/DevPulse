@@ -25,6 +25,7 @@ export default defineConfig({
   title: 'DevPulse',
   icon: '/utakata-icon.webp',
   logo: '/utakata-icon.webp',
+  logoText: 'uDCG',
   builderConfig: {
     plugins: [pluginTailwindcss()],
     source: {
