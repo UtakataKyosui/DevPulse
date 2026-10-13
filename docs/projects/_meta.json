@@ -1,6 +1,34 @@
 [
-  { "type": "dir", "name": "devpulse" },
-  { "type": "dir", "name": "sample-empty" },
-  { "type": "dir", "name": "sample-closed" },
-  { "type": "dir", "name": "sample-unselected" }
+  {
+    "type": "dir",
+    "name": "devpulse"
+  },
+  {
+    "type": "dir",
+    "name": "lifeboard"
+  },
+  {
+    "type": "dir",
+    "name": "astro-portfolio-with-blog"
+  },
+  {
+    "type": "dir",
+    "name": "gh-extension-template"
+  },
+  {
+    "type": "dir",
+    "name": "axvern"
+  },
+  {
+    "type": "dir",
+    "name": "daily-reflection-system"
+  },
+  {
+    "type": "dir",
+    "name": "repositories-manage"
+  },
+  {
+    "type": "dir",
+    "name": "gh-scaffold"
+  }
 ]

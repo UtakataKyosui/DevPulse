@@ -19,13 +19,11 @@ Home(`pageType: home`)の Hero 直下に、公開プロジェクトの状況を�
 
 ## 最新データの取得とデプロイ
 
-- 環境変数 `DEVPULSE_API_URL` を設定してビルドすると、ブラウザが `GET {DEVPULSE_API_URL}/snapshots`(Cloudflare Worker の読み取り専用 API、レスポンスは `{ "snapshots": [...] }`)から公開 Snapshot を取得して表示を更新します。未設定の場合は `src/data/devpulse/*.json` の fixture だけで表示します(ローカル開発用)。
+- ブラウザは同一 origin の `GET /api/snapshots` から Workers KV の公開 Snapshot を取得します。環境変数 `DEVPULSE_API_URL` で接続先を変更でき、空文字の場合はビルド同梱データだけで表示します。
 - 取得は Home の描画時だけ行い、通常のドキュメントページでは API を呼びません。
-- 表示できるプロジェクトの定義は `projects.sample.json` からビルド時に公開確認済みのものだけを埋め込みます。ビルド時点で public な Snapshot が無かったプロジェクトは、API が後から Snapshot を返しても再ビルドするまで表示されません。
+- 表示できるプロジェクトの定義は `projects.json` からビルド時に公開確認済みのものだけを埋め込みます。ビルド時点で public な Snapshot が無かったプロジェクトは、API が後から Snapshot を返しても再ビルドするまで表示されません。
 - 取得中は「取得しています」、失敗時は「取得できませんでした」を表示し、どちらもビルド時点のデータを表示し続けます。API が到達不能でもページは表示されます。
-- Pages と Worker が別 origin の場合、Worker 側で Pages の origin だけに `Access-Control-Allow-Origin` を限定してください。同一 origin の `/api/*` として公開できるなら `DEVPULSE_API_URL=/api` を推奨します。
-- ビルド出力は `doc_build/`(Cloudflare Pages の出力ディレクトリ、ビルドコマンドは `pnpm build`)です。Snapshot の同期で再ビルドは不要です。
+- Cron Triggers が毎時 GitHub の公開リポジトリを取得して KV を更新します。取得失敗時は成功済みデータを最大48時間保持し、404・非公開リポジトリは除外します。エラーは Worker Logs で確認できます。
+- ビルド出力は `doc_build/` です。`pnpm run deploy` が `cf` で静的ページ・Worker・KV・Cron を公開します。Snapshot の同期で再ビルドは不要です。
 
-## 未対応(今後)
-
-Worker API 自体(#7)と、詳細ページ `/projects/:slug/` の実体(#6)は別 Issue で対応します。カードのリンクは先行して `/projects/:slug/` を指します。
+初回同期前の API は503を返します。その間もビルド時点のデータを表示します。GitHub API は認証なしで使用するため、レート制限で取得できなかった場合は次の毎時同期で再試行します。
