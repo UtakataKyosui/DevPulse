@@ -62,7 +62,7 @@ export function ProjectStatus() {
   const { card } = model;
   return (
     <>
-      <dl className="devpulse-card__meta">
+      <dl className="devpulse-card__meta devpulse-detail__status">
         <dt>Milestone</dt>
         <dd>{card.milestoneTitle ?? '未設定'}</dd>
         <dt>Issue消化率</dt>
@@ -116,9 +116,13 @@ export function MilestoneList() {
     <ul className="devpulse-detail__list devpulse-milestones">
       {model.milestones.map((m) => (
         <li key={m.number}>
-          <a href={m.href}>{m.title}</a>
-          {m.featured && ' (現在地)'} — {m.stateLabel} / 期限 {m.dueText} /{' '}
-          {m.issueText}
+          <div>
+            <a href={m.href}>{m.title}</a>
+            {m.featured && <span className="devpulse-badge">現在地</span>}
+            <small>
+              {m.stateLabel} · {m.dueText} · {m.issueText}
+            </small>
+          </div>
           <ProgressGauge progress={m.progress} tone={model.card.health.tone} />
         </li>
       ))}
@@ -132,14 +136,15 @@ export function IssueThroughput() {
   const { rows, totalClosed, closedDays } = model.throughput;
   return (
     <>
-      <p>
-        直近 7 日間の Issue Close: <strong>{totalClosed} 件</strong>
-        (Close のあった日 {closedDays} 日)。Pull Request は含みません。
+      <p className="devpulse-detail__summary">
+        直近 7 日間: <strong>{totalClosed} 件 Close</strong> · 活動 {closedDays}{' '}
+        日<small>PR を除く</small>
       </p>
-      <ul className="devpulse-detail__list">
+      <ul className="devpulse-throughput">
         {rows.map((d) => (
-          <li key={d.date}>
-            {d.date}: {d.closed ? `${d.count} 件` : 'なし'}
+          <li key={d.date} title={`${d.date}: ${d.count} 件 Close`}>
+            <time dateTime={d.date}>{d.date.slice(5).replace('-', '/')}</time>
+            <strong>{d.count}</strong>
           </li>
         ))}
       </ul>
@@ -152,14 +157,18 @@ export function RecentActivity() {
   if (!model) return <Unavailable />;
   return (
     <>
-      <p>最終Commit: {model.card.lastCommitText}</p>
+      <p className="devpulse-detail__summary">
+        最終Commit: {model.card.lastCommitText}
+      </p>
       {model.recentClosures.length === 0 ? (
         <p>同期済みの最近 Close された Issue はありません。</p>
       ) : (
-        <ul className="devpulse-detail__list">
+        <ul className="devpulse-recent">
           {model.recentClosures.map((c) => (
             <li key={c.number}>
-              <a href={c.href}>#{c.number}</a> を {c.closedDate} に Close
+              <a href={c.href}>#{c.number}</a>
+              <time dateTime={c.closedDate}>{c.closedDate}</time>
+              <span>Close</span>
             </li>
           ))}
         </ul>
