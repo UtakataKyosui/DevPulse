@@ -51,11 +51,18 @@ export const milestoneSnapshotSchema = z.object({
   htmlUrl: z.string().url(),
 });
 
+export const issueClosureSchema = z.object({
+  number: z.number().int().positive(),
+  closedAt: dateTime,
+  isPullRequest: z.boolean(),
+});
+
 export const projectSnapshotSchema = z.object({
   repository: repositorySchema,
   visibility: z.enum(['public', 'private']),
   milestones: z.array(milestoneSnapshotSchema),
   lastActivityAt: dateTime.nullable(),
+  issueClosures: z.array(issueClosureSchema),
   fetchedAt: dateTime,
 });
 
@@ -76,3 +83,12 @@ export const rawMilestoneSchema = z.object({
 });
 
 export const rawMilestonesSchema = z.array(rawMilestoneSchema);
+
+/** GitHub REST API `GET /repos/{owner}/{repo}/issues?state=closed` の 1 件(PR を含み得る) */
+export const rawIssueSchema = z.object({
+  number: z.number().int().positive(),
+  closed_at: dateTime.nullable().optional(),
+  pull_request: z.unknown().optional(),
+});
+
+export const rawIssuesSchema = z.array(rawIssueSchema);

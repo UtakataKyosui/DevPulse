@@ -11,7 +11,7 @@ DevPulse は GitHub Milestones を進捗の **Single Source of Truth (SSOT)** �
 | Milestone(名前、説明、期限、状態) | GitHub | API から同期 |
 | Issue 状態・Milestone 所属 | GitHub | API から同期 |
 | Progress | GitHub Milestone の Issue 消化率 | DevPulse 側で導出 |
-| Health | DevPulse の判定規則 | 活動履歴から導出(詳細は #4) |
+| Health | DevPulse の判定規則 | 活動履歴から導出([算出ルール](./health-rules)) |
 | Lifecycle | DevPulse 設定 | `planned` / `active` / `paused` / `completed` / `archived` |
 
 Progress、Health、Lifecycle は互いに独立した値です。
@@ -34,7 +34,7 @@ progressPercent = closedIssues / (openIssues + closedIssues) * 100
 
 - `published: true` のプロジェクトだけが表示データに含まれます。
 - スナップショットの `visibility` が `public` でない(private)リポジトリは出力しません。
-- スナップショットが無い(同期未実施・取得失敗)場合、プロジェクトは含まれますが `snapshot: null`、`progressPercent: null`、`health: 'unknown'` になります。`visibility` は公開前検証用で、`toPublicView` が出力から除去します。
+- スナップショットが無い(同期未実施・取得失敗)場合、プロジェクトは含まれますが `snapshot: null`、`progressPercent: null`、`health.status: 'unknown'`(`freshness.stale: true`)になります。`visibility` は公開前検証用で、`toPublicView` が出力から除去します。
 - GitHub のアクセストークンは成果物・クライアントに出力しません。正規化は未知のフィールドを破棄します。
 
 ## 主な API

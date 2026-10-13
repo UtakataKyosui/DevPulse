@@ -1,7 +1,8 @@
-import { rawMilestonesSchema } from './schema.ts';
+import { rawIssuesSchema, rawMilestonesSchema } from './schema.ts';
 import type {
   GitHubMilestoneSnapshot,
   GitHubProjectSnapshot,
+  IssueClosure,
   RepositoryVisibility,
 } from './types.ts';
 
@@ -19,12 +20,30 @@ export function normalizeMilestones(raw: unknown): GitHubMilestoneSnapshot[] {
   }));
 }
 
+/** Issues API の配列から closed_at を持つ項目だけを残す。pull_request の有無は区別して保持 */
+export function normalizeIssueClosures(raw: unknown): IssueClosure[] {
+  return rawIssuesSchema.parse(raw).flatMap((issue) =>
+    issue.closed_at
+      ? [
+          {
+            number: issue.number,
+            closedAt: issue.closed_at,
+            isPullRequest: issue.pull_request !== undefined,
+          },
+        ]
+      : [],
+  );
+}
+
 export function normalizeProjectSnapshot(input: {
   repository: string;
   visibility: RepositoryVisibility;
   /** ページネーション済みの全ページを連結した配列 */
   rawMilestones: unknown;
+  /** 最新リモートコミットの日時(committer date 暫定) */
   lastActivityAt?: string | null;
+  /** Issues API (state=closed) の全ページ連結。省略時は空 */
+  rawIssues?: unknown;
   fetchedAt: string;
 }): GitHubProjectSnapshot {
   return {
@@ -32,6 +51,7 @@ export function normalizeProjectSnapshot(input: {
     visibility: input.visibility,
     milestones: normalizeMilestones(input.rawMilestones),
     lastActivityAt: input.lastActivityAt ?? null,
+    issueClosures: normalizeIssueClosures(input.rawIssues ?? []),
     fetchedAt: input.fetchedAt,
   };
 }
