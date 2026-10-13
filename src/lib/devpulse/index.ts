@@ -1,6 +1,7 @@
 export { buildProjectViews, toPublicView } from './build-views.ts';
 export { normalizeMilestones, normalizeProjectSnapshot } from './normalize.ts';
 export { calcProgressPercent } from './progress.ts';
+export { repositoryKey } from './repository-key.ts';
 export {
   milestoneSnapshotSchema,
   projectConfigSchema,

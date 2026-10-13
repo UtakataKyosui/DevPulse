@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { repositoryKey } from './repository-key.ts';
 import { LIFECYCLES } from './types.ts';
 
 const repositorySchema = z
@@ -25,14 +26,15 @@ export const projectConfigSchema = z
       const seen = new Set<string>();
       projects.forEach((project, index) => {
         const value = project[key];
-        if (seen.has(value)) {
+        const normalized = key === 'repository' ? repositoryKey(value) : value;
+        if (seen.has(normalized)) {
           ctx.addIssue({
             code: 'custom',
             path: ['projects', index, key],
             message: `duplicate ${key}: ${value}`,
           });
         }
-        seen.add(value);
+        seen.add(normalized);
       });
     }
   });
