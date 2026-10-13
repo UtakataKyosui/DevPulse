@@ -26,7 +26,7 @@ export function buildProjectViews(
   for (const definition of definitions) {
     if (!definition.published) continue;
     const snapshot = byRepo.get(repositoryKey(definition.repository));
-    if (!snapshot || snapshot.visibility !== 'public') continue;
+    if (snapshot?.visibility !== 'public') continue;
 
     const milestone = selectFeaturedMilestone(definition, snapshot);
     views.push({
