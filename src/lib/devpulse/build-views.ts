@@ -1,4 +1,5 @@
 import { calcProgressPercent } from './progress.ts';
+import { repositoryKey } from './repository-key.ts';
 import { selectFeaturedMilestone } from './select-milestone.ts';
 import type {
   GitHubProjectSnapshot,
@@ -9,20 +10,23 @@ import type {
 /**
  * 公開対象の ProjectView だけを返す。
  * - published: true のみ
- * - snapshot が private(または別リポジトリ)なら出力しない
- * - snapshot が無い(取得失敗/未同期)場合は progress null・health unknown
+ * - 公開状態を検証できた(public な snapshot がある)ものだけ出力する。
+ *   snapshot が無い(未同期/取得失敗)private かもしれない定義は出力しない
+ * - リポジトリは大文字小文字を区別せず照合する
  */
 export function buildProjectViews(
   definitions: ProjectDefinition[],
   snapshots: GitHubProjectSnapshot[],
 ): ProjectView[] {
-  const byRepo = new Map(snapshots.map((s) => [s.repository, s]));
+  const byRepo = new Map(
+    snapshots.map((s) => [repositoryKey(s.repository), s]),
+  );
   const views: ProjectView[] = [];
 
   for (const definition of definitions) {
     if (!definition.published) continue;
-    const snapshot = byRepo.get(definition.repository) ?? null;
-    if (snapshot && snapshot.visibility !== 'public') continue;
+    const snapshot = byRepo.get(repositoryKey(definition.repository));
+    if (!snapshot || snapshot.visibility !== 'public') continue;
 
     const milestone = selectFeaturedMilestone(definition, snapshot);
     views.push({
