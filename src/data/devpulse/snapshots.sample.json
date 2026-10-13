@@ -4,6 +4,18 @@
       "repository": "UtakataKyosui/DevPulse",
       "visibility": "public",
       "lastActivityAt": "2026-10-10T09:00:00Z",
+      "issueClosures": [
+        {
+          "number": 2,
+          "closedAt": "2026-10-12T05:00:00Z",
+          "isPullRequest": false
+        },
+        {
+          "number": 9,
+          "closedAt": "2026-10-12T06:00:00Z",
+          "isPullRequest": true
+        }
+      ],
       "fetchedAt": "2026-10-13T00:00:00Z",
       "milestones": [
         {
@@ -22,6 +34,7 @@
       "repository": "example/empty",
       "visibility": "public",
       "lastActivityAt": null,
+      "issueClosures": [],
       "fetchedAt": "2026-10-13T00:00:00Z",
       "milestones": [
         {
@@ -40,6 +53,7 @@
       "repository": "example/closed",
       "visibility": "public",
       "lastActivityAt": "2026-08-01T00:00:00Z",
+      "issueClosures": [],
       "fetchedAt": "2026-10-13T00:00:00Z",
       "milestones": [
         {
@@ -58,6 +72,7 @@
       "repository": "example/unselected",
       "visibility": "public",
       "lastActivityAt": "2026-09-01T00:00:00Z",
+      "issueClosures": [],
       "fetchedAt": "2026-10-13T00:00:00Z",
       "milestones": [
         {
@@ -76,6 +91,7 @@
       "repository": "example/private",
       "visibility": "private",
       "lastActivityAt": "2026-10-01T00:00:00Z",
+      "issueClosures": [],
       "fetchedAt": "2026-10-13T00:00:00Z",
       "milestones": [
         {

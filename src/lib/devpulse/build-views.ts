@@ -1,21 +1,34 @@
+import { assessDeadline, DEFAULT_DUE_SOON_DAYS } from './deadline.ts';
+import { assessFreshness, DEFAULT_STALE_AFTER_HOURS } from './freshness.ts';
+import { assessHealth } from './health.ts';
 import { calcProgressPercent } from './progress.ts';
 import { selectFeaturedMilestone } from './select-milestone.ts';
+import { calcIssueThroughput } from './throughput.ts';
 import type {
   GitHubProjectSnapshot,
   ProjectDefinition,
   ProjectView,
 } from './types.ts';
 
+export interface BuildViewsOptions {
+  /** 判定基準時刻。純粋性とテスト容易性のため必須 */
+  now: Date;
+  dueSoonDays?: number;
+  staleAfterHours?: number;
+}
+
 /**
  * 公開対象の ProjectView だけを返す。
  * - published: true のみ
  * - snapshot が private(または別リポジトリ)なら出力しない
- * - snapshot が無い(取得失敗/未同期)場合は progress null・health unknown
+ * - snapshot が無い(取得失敗/未同期)場合は progress null・health unknown・freshness stale
  */
 export function buildProjectViews(
   definitions: ProjectDefinition[],
   snapshots: GitHubProjectSnapshot[],
+  options: BuildViewsOptions,
 ): ProjectView[] {
+  const { now } = options;
   const byRepo = new Map(snapshots.map((s) => [s.repository, s]));
   const views: ProjectView[] = [];
 
@@ -29,7 +42,22 @@ export function buildProjectViews(
       definition,
       snapshot,
       progressPercent: milestone ? calcProgressPercent(milestone) : null,
-      health: 'unknown',
+      health: assessHealth({
+        lifecycle: definition.lifecycle,
+        lastActivityAt: snapshot?.lastActivityAt ?? null,
+        now,
+      }),
+      throughput: calcIssueThroughput(snapshot?.issueClosures ?? [], now),
+      deadline: assessDeadline(
+        milestone,
+        now,
+        options.dueSoonDays ?? DEFAULT_DUE_SOON_DAYS,
+      ),
+      freshness: assessFreshness(
+        snapshot?.fetchedAt ?? null,
+        now,
+        options.staleAfterHours ?? DEFAULT_STALE_AFTER_HOURS,
+      ),
     });
   }
   return views;
@@ -44,6 +72,7 @@ export function toPublicView(view: ProjectView) {
       repository: snapshot.repository,
       milestones: snapshot.milestones,
       lastActivityAt: snapshot.lastActivityAt,
+      issueClosures: snapshot.issueClosures,
       fetchedAt: snapshot.fetchedAt,
     },
   };
