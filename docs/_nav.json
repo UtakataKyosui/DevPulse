@@ -1,5 +1,10 @@
 [
   {
+    "text": "Reports",
+    "link": "/reports/",
+    "activeMatch": "/reports/"
+  },
+  {
     "text": "Guide",
     "link": "/guide/start/introduction",
     "activeMatch": "/guide/"
