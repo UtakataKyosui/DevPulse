@@ -1,5 +1,6 @@
 ---
 pageType: home
+link-rss: reports
 
 hero:
   name: Utakata Development Complete Gauge
@@ -8,3 +9,5 @@ hero:
     src: /rspress-icon.png
     alt: Logo
 ---
+
+[日次進捗レポート](/reports/) · <a href="/rss/reports.xml">RSS を購読</a>

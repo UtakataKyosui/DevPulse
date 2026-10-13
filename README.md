@@ -23,10 +23,12 @@ Use Node.js 22.18 or later and pnpm. Install dependencies with
 
 ```bash
 cf auth login
-pnpm run deploy
+pnpm run deploy:bootstrap # first deployment only; see daily report setup below
 ```
 
-`pnpm run deploy` builds Rspress into `doc_build/` and deploys it with `cf`.
+`pnpm run deploy` restores saved reports, builds Rspress into `doc_build/`,
+and deploys it with `cf`. It requires `DEVPULSE_SITE_URL` and `REPORTS_TOKEN`.
+Use `deploy:bootstrap` only for the first deployment before the report API exists.
 To validate without uploading, run `pnpm run deploy:check`.
 The Worker name is `devpulse` in `cloudflare.config.ts`.
 
@@ -57,6 +59,120 @@ curl http://localhost:8787/api/snapshots
 
 The API returns 503 until the first successful sync. For static-only Rspress
 development, set `DEVPULSE_API_URL=''` when running `pnpm dev`.
+
+## Daily AI reports and RSS
+
+The Worker generates a Japanese report at **09:00 JST** (`0 0 * * *`, UTC)
+for the previous JST calendar day. Issue closure counts exclude PRs and use
+the half-open interval 00:00–next-day 00:00. Milestone progress, health and
+deadlines describe the capture time, rather than historical day-end state.
+Only a consecutive capture of the same Milestone produces a progress delta.
+Failed refreshes use explicitly marked older data for at most 48 hours;
+missing data and first captures have unknown deltas.
+
+Workers AI writes a plain-text summary; deterministic counts and source links
+are displayed separately. The default model is
+`@cf/meta/llama-3.3-70b-instruct-fp8-fast`. Edit `REPORT_SETTINGS` in
+`cloudflare.config.ts` to select that model or
+`@cf/meta/llama-3.1-8b-instruct`, and adjust `maxTokens` (100–2000) or
+`maxInputChars` (1000–24000). Prompt changes require a new prompt version in
+the report generator/schema. Validate Japanese output and current Workers AI
+pricing/availability before enabling production inference:
+[model documentation](https://developers.cloudflare.com/workers-ai/models/llama-3.3-70b-instruct-fp8-fast/).
+
+`REPORTS` is a D1 database provisioned by `cf`, with an idempotent table
+initialization in the Worker. A unique date and a 10-minute fenced lease
+serialize generation. A day gets up to three automatic attempts, including
+hourly recovery after 09:00 JST. Captured inputs survive inference failure;
+completed reports never invoke AI again. Stored reports retain their URL,
+GUID, publication timestamp and model metadata on every rebuild. D1 retains
+all reports and captures without automatic expiration; the export supports
+up to 10,000 dates and fails rather than silently truncating the archive.
+The RSS contains the latest 30 available reports.
+
+### Production setup
+
+1. Set GitHub repository variable `DEVPULSE_SITE_URL` to the deployed site
+   origin, such as `https://<your-worker>.<your-subdomain>.workers.dev`, without
+   a path. RSS links and GUIDs use this absolute origin; keep it stable.
+2. Generate a random token of at least 32 characters. Set the same value as
+   Worker secret `REPORTS_TOKEN` and GitHub Actions secret `REPORTS_TOKEN`.
+   Use the Cloudflare dashboard's Worker secrets settings to avoid pasting
+   credentials into shell arguments. The API rejects missing/short tokens.
+3. Add GitHub Actions secrets `CLOUDFLARE_API_TOKEN` and
+   `CLOUDFLARE_ACCOUNT_ID`. Grant the token only the required Workers deployment,
+   KV, D1 provisioning and Workers AI permissions for the target account.
+   Do not commit tokens or `.dev.vars`/`.env` files.
+4. For the first deployment, run `pnpm run deploy:bootstrap` with `DEVPULSE_SITE_URL`
+   set. This installs the AI binding, D1 binding and both Cron triggers. If
+   necessary, deploy once to create the Worker before adding its secret.
+5. Enable `.github/workflows/reports.yml` on the repository's default branch.
+   Run **Publish daily reports** manually after the first report is generated.
+
+The workflow runs at minute 15 of every hour: normal publication starts at
+09:15 JST, and later runs recover failed builds/deployments and remove
+withdrawn content. GitHub schedules may be delayed; this is not an exact
+delivery-time guarantee. It fetches all saved reports, builds Rspress, checks
+a dry-run, deploys, verifies the public feed matches the build, and only then
+records publication in D1. A failure before deployment leaves the previous
+site in place. A failure after deployment can safely repeat the workflow.
+All production deploy workflows should share concurrency group
+`devpulse-production` to avoid an older build replacing a newer one.
+
+Subscribe at **`/rss/reports.xml`** (RSS 2.0). Articles appear at
+`/reports/YYYY-MM-DD/`, with an archive at `/reports/`. The home page and
+archive advertise the feed through `link rel="alternate"`.
+
+### Local checks and manual recovery
+
+Use an ignored `.dev.vars` file for the local Worker token. To call a deployed
+API, securely set `DEVPULSE_SITE_URL` and `REPORTS_TOKEN` in your environment:
+
+```bash
+pnpm run reports:generate  # current target day only; explicitly resets exhausted attempts
+pnpm run reports:fetch     # download saved, currently publishable reports
+pnpm run build            # create Markdown articles and RSS
+pnpm run deploy:check      # validate Worker without uploading
+```
+
+`reports:generate` can incur a Workers AI charge; local unit tests mock AI
+and GitHub. A running generation returns HTTP 409. Fix the failure before
+requesting a manual reset. To retry **publication only**, rerun the Actions
+workflow: do not regenerate. `reports:ack` is reserved for a verified successful
+deployment. The workflow verifies the exact generated feed before using it.
+
+Generated Markdown, `.reports-cache/` and the feed manifest are ignored by
+Git. `pnpm run deploy` always restores the archive first and fails if the
+report API is unavailable. Do not use `deploy:bootstrap` or a direct
+`cf deploy` on an existing archive without first fetching saved reports:
+deploying a checkout without that cache publishes an empty archive.
+Treat the cache as a temporary build input, never a backup.
+Run `pnpm run test`, `pnpm run check`, `pnpm exec tsc --noEmit`,
+`pnpm run format` and `pnpm run deploy:check` before publishing changes.
+
+Structured Worker events `report_generated` and `report_generation_failed`
+identify the target date; check them alongside `snapshot_sync_failed` and
+GitHub Actions step results. D1 `daily_reports` records `attempts`,
+`lease_until`, captured `input`, completed `report`, and deployment
+`published_at`; a stored report without deployment acknowledgement needs
+publication recovery, not another AI call.
+
+### Public scope and withdrawal
+
+Only configured `published: true` projects with public, non-expired GitHub
+snapshots enter AI input and publication. If any repository included in a
+past report is removed or becomes private, the entire report is omitted on
+the next build (including its summary). The Worker also stops serving that
+article and temporarily returns 503 for an affected RSS until it is rebuilt.
+Visibility is observed during GitHub synchronization; a transient GitHub
+failure can retain previously public data for up to 48 hours. Set
+`published: false` and deploy for an explicit immediate opt-out.
+
+Static client chunks, search indexes and copies already downloaded by RSS
+readers cannot be recalled. A complete site rebuild removes withdrawn text
+from the published build; this feed is for information safe to publish,
+not access-controlled private reporting. The source records remain in D1
+for recovery and require an explicit administrator action to erase.
 
 ## Setup
 
