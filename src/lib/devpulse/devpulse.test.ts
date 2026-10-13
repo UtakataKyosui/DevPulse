@@ -13,6 +13,7 @@ import {
   normalizeMilestones,
   projectConfigSchema,
   selectFeaturedMilestone,
+  selectPublicData,
   snapshotFileSchema,
   toPublicView,
 } from './index.ts';
@@ -141,6 +142,33 @@ describe('buildProjectViews', () => {
         definition: expect.objectContaining({ id: 'devpulse' }),
       }),
     );
+  });
+});
+
+describe('selectPublicData', () => {
+  const data = selectPublicData(config.projects, snapshots);
+
+  it('未公開・private の定義と Snapshot を成果物用データから除く', () => {
+    const ids = data.projects.map((p) => p.id);
+    expect(ids).not.toContain('sample-draft');
+    expect(ids).not.toContain('sample-private');
+    expect(data.snapshots.map((s) => s.repository)).not.toContain(
+      'example/private',
+    );
+    expect(data.snapshots.every((s) => s.visibility === 'public')).toBe(true);
+  });
+
+  it('シリアライズ結果に非公開の識別子を含めない', () => {
+    const json = JSON.stringify(data);
+    expect(json).not.toContain('example/private');
+    expect(json).not.toContain('sample-draft');
+    expect(json).not.toContain('secret-milestone');
+  });
+
+  it('公開対象の ProjectView は全件の結果と一致する', () => {
+    expect(
+      buildProjectViews(data.projects, data.snapshots, { now: NOW }),
+    ).toEqual(views);
   });
 });
 

@@ -63,6 +63,33 @@ export function buildProjectViews(
   return views;
 }
 
+/**
+ * 公開成果物に含めてよい定義と Snapshot だけを返す。
+ * published: false の定義、および private(または別リポジトリ)の Snapshot とその定義を除く。
+ * クライアントへ渡す前(ビルド境界)で適用する。
+ */
+export function selectPublicData(
+  definitions: ProjectDefinition[],
+  snapshots: GitHubProjectSnapshot[],
+): {
+  projects: ProjectDefinition[];
+  snapshots: GitHubProjectSnapshot[];
+} {
+  const byRepo = new Map(snapshots.map((s) => [s.repository, s]));
+  const projects = definitions.filter((definition) => {
+    if (!definition.published) return false;
+    const snapshot = byRepo.get(definition.repository);
+    return !snapshot || snapshot.visibility === 'public';
+  });
+  const repositories = new Set(projects.map((p) => p.repository));
+  return {
+    projects,
+    snapshots: snapshots.filter(
+      (s) => s.visibility === 'public' && repositories.has(s.repository),
+    ),
+  };
+}
+
 /** 公開成果物向けに visibility を除去した JSON 化可能な形へ変換する */
 export function toPublicView(view: ProjectView) {
   const { snapshot } = view;

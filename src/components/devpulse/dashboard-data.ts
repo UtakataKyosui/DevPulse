@@ -1,14 +1,16 @@
-import projectsJson from '../../data/devpulse/projects.sample.json';
-import snapshotsJson from '../../data/devpulse/snapshots.sample.json';
 import {
   buildProjectViews,
+  type GitHubProjectSnapshot,
+  type ProjectDefinition,
   type ProjectView,
-  projectConfigSchema,
-  snapshotFileSchema,
 } from '../../lib/devpulse/index.ts';
 
 /** rspress.config.ts の source.define でビルド時に 1 度だけ固定される(SSG とクライアントで同一値) */
 declare const __DEVPULSE_BUILD_TIME__: string | undefined;
+/** rspress.config.ts が公開対象だけに絞って埋め込む(非公開データは成果物に含めない) */
+declare const __DEVPULSE_PUBLIC_DATA__:
+  | { projects: ProjectDefinition[]; snapshots: GitHubProjectSnapshot[] }
+  | undefined;
 
 export function getBuildTime(): Date {
   return new Date(
@@ -19,7 +21,9 @@ export function getBuildTime(): Date {
 }
 
 export function loadProjectViews(now: Date = getBuildTime()): ProjectView[] {
-  const { projects } = projectConfigSchema.parse(projectsJson);
-  const { snapshots } = snapshotFileSchema.parse(snapshotsJson);
+  const { projects, snapshots } =
+    typeof __DEVPULSE_PUBLIC_DATA__ === 'undefined'
+      ? { projects: [], snapshots: [] }
+      : __DEVPULSE_PUBLIC_DATA__;
   return buildProjectViews(projects, snapshots, { now });
 }
