@@ -1,11 +1,16 @@
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import {
+  assessDeadline,
+  assessFreshness,
+  assessHealth,
   buildProjectViews,
+  calcIssueThroughput,
   type GitHubMilestoneSnapshot,
   type GitHubProjectSnapshot,
   type Lifecycle,
   type ProjectDefinition,
+  type ProjectView,
 } from '../../lib/devpulse/index.ts';
 import {
   buildDashboardModel,
@@ -73,11 +78,31 @@ function make(opts: {
   return { def, snap };
 }
 
+/**
+ * buildProjectViews は公開状態を検証できない(snapshot なし)定義を出力しないため、
+ * 表示モデルの防御的な空状態を確かめる目的で snapshot なしの View を直接組み立てる
+ */
+function viewWithoutSnapshot(def: ProjectDefinition): ProjectView {
+  return {
+    definition: def,
+    snapshot: null,
+    progressPercent: null,
+    health: assessHealth({
+      lifecycle: def.lifecycle,
+      lastActivityAt: null,
+      now: NOW,
+    }),
+    throughput: calcIssueThroughput([], NOW),
+    deadline: assessDeadline(null, NOW),
+    freshness: assessFreshness(null, NOW),
+  };
+}
+
 function views(...cases: ReturnType<typeof make>[]) {
-  return buildProjectViews(
-    cases.map((c) => c.def),
-    cases.flatMap((c) => c.snap),
-    { now: NOW },
+  return cases.map((c) =>
+    c.snap.length === 0
+      ? viewWithoutSnapshot(c.def)
+      : buildProjectViews([c.def], c.snap, { now: NOW })[0],
   );
 }
 
