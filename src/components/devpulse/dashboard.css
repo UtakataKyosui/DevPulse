@@ -303,3 +303,15 @@
     margin-bottom: 8px;
   }
 }
+
+.devpulse-load {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--rp-c-divider);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.devpulse-load--error {
+  border-color: var(--rp-c-brand);
+}
