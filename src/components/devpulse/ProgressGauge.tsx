@@ -1,3 +1,4 @@
+import { Progress } from '../ui/progress.tsx';
 import type { HealthTone, ProgressModel } from './model.ts';
 
 interface Props {
@@ -10,18 +11,12 @@ export function ProgressGauge({ progress, tone }: Props) {
   const { percent } = progress;
   return (
     <div className="devpulse-gauge">
-      <div
-        className={`devpulse-gauge__track${percent === null ? ' devpulse-gauge__track--empty' : ''}`}
-        role="img"
+      <Progress
+        className={`devpulse-gauge__track devpulse-progress--${tone}${percent === null ? ' devpulse-gauge__track--empty' : ''}`}
+        value={percent}
         aria-label={progress.ariaLabel}
-      >
-        {percent !== null && (
-          <div
-            className={`devpulse-gauge__fill devpulse-tone--${tone}`}
-            style={{ width: `${percent}%` }}
-          />
-        )}
-      </div>
+        aria-valuetext={progress.text}
+      />
       <span className="devpulse-gauge__value" aria-hidden="true">
         {progress.text}
       </span>

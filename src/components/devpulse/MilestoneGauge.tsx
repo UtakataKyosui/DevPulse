@@ -1,3 +1,4 @@
+import { Progress } from '../ui/progress.tsx';
 import type { CardModel, HealthTone } from './model.ts';
 
 export function MilestoneGauge({
@@ -21,12 +22,12 @@ export function MilestoneGauge({
             aria-label={`${index + 1}. ${milestone.title}: ${milestone.progress.ariaLabel}`}
             title={`${milestone.title}: ${milestone.progress.text} (${milestone.issueText})`}
           >
-            {milestone.progress.percent !== null && (
-              <span
-                className={`devpulse-gauge__fill devpulse-tone--${tone}`}
-                style={{ width: `${milestone.progress.percent}%` }}
-              />
-            )}
+            <Progress
+              value={milestone.progress.percent}
+              aria-label={milestone.title}
+              aria-valuetext={milestone.progress.text}
+              className={`h-full rounded-none devpulse-progress--${tone}${milestone.progress.percent === null ? ' devpulse-gauge__track--empty' : ''}`}
+            />
           </a>
         ))}
       </fieldset>
