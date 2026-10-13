@@ -43,7 +43,7 @@
       "id": "sample-unsynced",
       "slug": "sample-unsynced",
       "name": "Sample Unsynced",
-      "description": "同期未実施(snapshot なし)のサンプル",
+      "description": "同期未実施(snapshot なし)のため出力されない",
       "repository": "example/unsynced",
       "published": true,
       "lifecycle": "active",
