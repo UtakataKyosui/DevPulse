@@ -149,6 +149,21 @@ describe('admin Cloudflare Access verification', () => {
     ).toBe(503);
   });
 
+  it('fails closed when only one Access setting is present', async () => {
+    expect(
+      await status(await sign(valid), {
+        ...config,
+        ACCESS_SETTINGS: { teamDomain: DOMAIN },
+      } as unknown as typeof config),
+    ).toBe(503);
+    expect(
+      await status(await sign(valid), {
+        ...config,
+        ACCESS_SETTINGS: { aud: AUD },
+      } as unknown as typeof config),
+    ).toBe(503);
+  });
+
   it('honors the bypass only on loopback hosts', async () => {
     const env = { ADMIN_AUTH_BYPASS: '1' };
     const local = await authorizeAdmin(

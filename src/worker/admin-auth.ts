@@ -99,7 +99,7 @@ export async function authorizeAdmin(
     return { ok: true, email: 'local-bypass' };
 
   const domain = normalizedTeamDomain(env.ACCESS_SETTINGS?.teamDomain);
-  const aud = env.ACCESS_SETTINGS?.aud.trim();
+  const aud = env.ACCESS_SETTINGS?.aud?.trim();
   const allowed = (env.ADMIN_ALLOWED_EMAILS ?? '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
