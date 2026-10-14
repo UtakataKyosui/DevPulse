@@ -75,12 +75,12 @@ Wranglerのスコープ不足の警告が出た場合は`pnpm exec wrangler logi
 
 ## 3. Access（管理画面の保護）
 
-前提：保護する本番ホスト名が、このアカウントのゾーン上にあること。
-`DEVPULSE_SITE_URL`が`*.workers.dev`の場合、`workers.dev`はアカウントのゾーンではないため、
-パス指定（`/admin*`）の`destinations`を作成できるかは確認できていない。
-`type: "worker"`の`destinations`はWorker全体を保護するため、公開ページとRSSも認証が必要になる。
-カスタムドメインを割り当ててから進める。`DEVPULSE_SITE_URL`を変えるとRSSのリンクとGUIDが変わる点に注意する
+公式ドキュメントでは、パス指定のセルフホスト型アプリのドメインはアカウントのアクティブなゾーンに属する必要があるとされる。
+`DEVPULSE_SITE_URL`が`*.workers.dev`の場合でも、`destinations`を作成するAPIは受け付けられることを確認している
+（実際に保護されるかはデプロイ後の確認が必要）。保護されない場合は、カスタムドメインを割り当てる。
+`DEVPULSE_SITE_URL`を変えるとRSSのリンクとGUIDが変わる点に注意する
 （[本番環境の設定](../devpulse-development/references/reports.md#本番環境の設定)）。
+`type: "worker"`の`destinations`はWorker全体を保護するため、公開ページとRSSも認証が必要になる。使わない。
 
 1. チームドメインを取得する。レスポンスの`auth_domain`が`<team>.cloudflareaccess.com`になる。
 
@@ -106,6 +106,11 @@ Wranglerのスコープ不足の警告が出た場合は`pnpm exec wrangler logi
    ```bash
    cf zero-trust access applications create --dry-run --body '{"name":"DevPulse Admin","type":"self_hosted","destinations":[{"type":"public","uri":"<production-host>/admin*"},{"type":"public","uri":"<production-host>/api/admin/*"}],"policies":[{"id":"<policy-id>"}]}'
    ```
+
+   `*.workers.dev`のホスト名でも、パス指定の`destinations`を持つアプリの作成はAPIに受け付けられる。
+   ただし未認証アクセスがログインへリダイレクトされるかは、デプロイ後に確認する。
+   ポリシーを後から付ける場合は、`applications update <app-id>`を使う。`app-id`は位置引数で、
+   リクエストはPUTのため`name`と`destinations`も含めて全体を渡す。
 
 5. `cloudflare.config.ts`の`ACCESS_SETTINGS`に、チームドメインを`teamDomain`、AUDを`aud`として記載する。
    コミットしてデプロイする（`reports.yml`を実行する）。
