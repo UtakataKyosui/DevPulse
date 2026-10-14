@@ -61,6 +61,13 @@ APIの権限名は、ダッシュボードの`Edit`が`Write`になる。
 
 ## 2. Access（管理画面の保護）
 
+前提：保護する本番ホスト名が、このアカウントのゾーン上にあること。
+`DEVPULSE_SITE_URL`が`*.workers.dev`の場合、`workers.dev`はアカウントのゾーンではないため、
+パス指定（`/admin*`）の`destinations`を作成できるかは確認できていない。
+`type: "worker"`の`destinations`はWorker全体を保護するため、公開ページとRSSも認証が必要になる。
+カスタムドメインを割り当ててから進める。`DEVPULSE_SITE_URL`を変えるとRSSのリンクとGUIDが変わる点に注意する
+（[本番環境の設定](../devpulse-development/references/reports.md#本番環境の設定)）。
+
 1. チームドメインを取得する。レスポンスの`auth_domain`が`<team>.cloudflareaccess.com`になる。
 
    ```bash
@@ -69,8 +76,9 @@ APIの権限名は、ダッシュボードの`Edit`が`Write`になる。
 
    Zero Trustの組織がまだない場合は、ダッシュボードで初回のオンボーディングを行う。
 
-2. ログイン方法にGitHubを使う場合は、`cf zero-trust identity-providers list`で登録済みか確認する。
-   未登録なら、GitHub OAuth AppのClient Secretが引数に載らないよう、ダッシュボードで登録する。
+2. `cf zero-trust identity-providers list`で登録済みのログイン方法を確認する。ワンタイムPIN（`onetimepin`）だけが
+   登録されている場合は、秘密の値を使わずにそのまま利用できる。GitHubを使う場合は、GitHub OAuth Appの
+   Client Secretが引数に載らないよう、ダッシュボードで登録する。
 
 3. 所有者のメールアドレスだけを許可する再利用可能なポリシーを作成する。作成後にポリシーのIDを控える。
 
