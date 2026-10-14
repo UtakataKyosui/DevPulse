@@ -18,11 +18,19 @@ describe('evaluateEnv', () => {
     expect(status('worker-secret', 'REPORTS_TOKEN')).toBe('unknown');
   });
 
-  it('marks a missing optional item without failing', () => {
+  it('marks every declared Worker secret as required', () => {
     const result = evaluateEnv({ 'worker-secret': new Set() });
-    expect(result.find((r) => r.item.name === 'GITHUB_TOKEN')?.status).toBe(
-      'optional-missing',
-    );
+    for (const name of [
+      'REPORTS_TOKEN',
+      'GITHUB_TOKEN',
+      'ADMIN_ALLOWED_EMAILS',
+    ])
+      expect(
+        result.find(
+          (r) => r.item.place === 'worker-secret' && r.item.name === name,
+        )?.status,
+        name,
+      ).toBe('missing');
   });
 });
 
