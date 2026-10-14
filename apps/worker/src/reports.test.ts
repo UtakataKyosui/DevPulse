@@ -1,4 +1,3 @@
-import { DatabaseSync } from 'node:sqlite';
 import projectsJson from '@devpulse/domain/fixtures/projects.sample.json';
 import {
   collectReportInput,
@@ -14,37 +13,7 @@ import {
   reportsAuthorized,
 } from './reports.ts';
 import type { Env } from './sync.ts';
-import { configKv } from './test-config.ts';
-
-function database() {
-  const sqlite = new DatabaseSync(':memory:');
-  const db = {
-    prepare(sql: string) {
-      let args: (string | number | null)[] = [];
-      const statement = {
-        bind(...values: (string | number | null)[]) {
-          args = values;
-          return statement;
-        },
-        async run() {
-          const result = sqlite.prepare(sql).run(...args);
-          return { meta: { changes: Number(result.changes) } };
-        },
-        async first() {
-          return sqlite.prepare(sql).get(...args) ?? null;
-        },
-        async all() {
-          return { results: sqlite.prepare(sql).all(...args) };
-        },
-      };
-      return statement;
-    },
-    async batch(statements: { run: () => Promise<unknown> }[]) {
-      return Promise.all(statements.map((s) => s.run()));
-    },
-  };
-  return { sqlite, db: db as unknown as Env['REPORTS'] };
-}
+import { configKv, database } from './test-config.ts';
 
 function environment() {
   const { sqlite, db } = database();

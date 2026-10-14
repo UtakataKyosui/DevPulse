@@ -6,6 +6,7 @@ import {
 import type { InferEnv, UnwrapConfig } from 'cf/config';
 import type config from '../cloudflare.config.ts';
 import { readPublishedProjects } from './config-store.ts';
+import { acquireSyncLock, releaseSyncLock } from './sync-lock.ts';
 
 export type Env = InferEnv<UnwrapConfig<typeof config>['worker']>;
 export const SNAPSHOT_KEY = 'snapshots:v1';
@@ -15,6 +16,38 @@ class GitHubError extends Error {
   constructor(public status: number) {
     super(`GitHub HTTP ${status}`);
   }
+}
+
+/** レート制限の応答。再試行せず、同期全体を次回に回す。 */
+class RateLimitError extends GitHubError {
+  constructor(
+    status: number,
+    public retryAfterSeconds: number | null,
+    public resetAt: string | null,
+  ) {
+    super(status);
+    this.message = `GitHub rate limit (HTTP ${status})`;
+  }
+}
+
+function rateLimitFrom(response: Response): RateLimitError | null {
+  const retryAfter = response.headers.get('Retry-After');
+  const limited =
+    response.status === 429 ||
+    (response.status === 403 &&
+      (response.headers.get('X-RateLimit-Remaining') === '0' ||
+        retryAfter !== null));
+  if (!limited) return null;
+  const reset = Number(response.headers.get('X-RateLimit-Reset'));
+  return new RateLimitError(
+    response.status,
+    retryAfter !== null && Number.isFinite(Number(retryAfter))
+      ? Number(retryAfter)
+      : null,
+    Number.isFinite(reset) && reset > 0
+      ? new Date(reset * 1000).toISOString()
+      : null,
+  );
 }
 
 async function github(
@@ -32,7 +65,8 @@ async function github(
     },
     signal: AbortSignal.timeout(20_000),
   });
-  if (!response.ok) throw new GitHubError(response.status);
+  if (!response.ok)
+    throw rateLimitFrom(response) ?? new GitHubError(response.status);
   return response.json();
 }
 
@@ -56,11 +90,42 @@ async function pages(
   throw new Error('GitHub pagination limit exceeded');
 }
 
+export type SyncResult = {
+  status: 'completed' | 'busy' | 'rate_limited';
+  count: number;
+  failures: number;
+};
+
+/**
+ * 公開 Snapshot を同期する。同時に 1 つだけ実行し、他が実行中なら何もせず `busy` を返す。
+ * レート制限を受けたら再試行せずに中断し、未更新のリポジトリは最後の成功データを保持する。
+ */
 export async function syncSnapshots(
-  env: Pick<Env, 'SNAPSHOTS' | 'CONFIG'> & { GITHUB_TOKEN?: string },
+  env: Pick<Env, 'SNAPSHOTS' | 'CONFIG'> & {
+    REPORTS?: Env['REPORTS'];
+    GITHUB_TOKEN?: string;
+  },
   fetcher: typeof fetch = fetch,
   now = new Date(),
-): Promise<void> {
+): Promise<SyncResult> {
+  const db = env.REPORTS;
+  const lease = db ? await acquireSyncLock(db, now.getTime()) : null;
+  if (db && !lease) {
+    console.log(JSON.stringify({ event: 'snapshot_sync_busy' }));
+    return { status: 'busy', count: 0, failures: 0 };
+  }
+  try {
+    return await synchronize(env, fetcher, now);
+  } finally {
+    if (db && lease) await releaseSyncLock(db, lease);
+  }
+}
+
+async function synchronize(
+  env: Pick<Env, 'SNAPSHOTS' | 'CONFIG'> & { GITHUB_TOKEN?: string },
+  fetcher: typeof fetch,
+  now: Date,
+): Promise<SyncResult> {
   // 設定が無い・不正なときは何も書かず(既存 Snapshot も保持)、fixture へは戻さない。
   let projects: Awaited<ReturnType<typeof readPublishedProjects>>;
   try {
@@ -80,7 +145,15 @@ export async function syncSnapshots(
   const token = env.GITHUB_TOKEN || undefined;
   const snapshots = [];
   let failures = 0;
-  for (const project of projects) {
+  let rateLimited = false;
+  const keepPrevious = (repository: string) => {
+    const old = previous.snapshots.find(
+      (s) => s.repository === repository && s.visibility === 'public',
+    );
+    if (old && now.getTime() - Date.parse(old.fetchedAt) < MAX_AGE)
+      snapshots.push(old);
+  };
+  for (const [index, project] of projects.entries()) {
     try {
       const repository = (await github(project.repository, fetcher, token)) as {
         private?: boolean;
@@ -128,14 +201,24 @@ export async function syncSnapshots(
           error: error instanceof Error ? error.message : 'Unknown error',
         }),
       );
+      if (error instanceof RateLimitError) {
+        // Do not retry or call GitHub again: carry over every repository not yet refreshed.
+        console.error(
+          JSON.stringify({
+            event: 'snapshot_sync_rate_limited',
+            retryAfterSeconds: error.retryAfterSeconds,
+            resetAt: error.resetAt,
+          }),
+        );
+        rateLimited = true;
+        for (const rest of projects.slice(index)) keepPrevious(rest.repository);
+        failures += projects.length - index;
+        break;
+      }
       // A missing/private repository must disappear; it is removed on purpose, not a failed sync.
       if (error instanceof GitHubError && error.status === 404) continue;
       failures++;
-      const old = previous.snapshots.find(
-        (s) => s.repository === project.repository && s.visibility === 'public',
-      );
-      if (old && now.getTime() - Date.parse(old.fetchedAt) < MAX_AGE)
-        snapshots.push(old);
+      keepPrevious(project.repository);
     }
   }
   const data = snapshotFileSchema.parse({
@@ -152,4 +235,9 @@ export async function syncSnapshots(
       failures,
     }),
   );
+  return {
+    status: rateLimited ? 'rate_limited' : 'completed',
+    count: snapshots.length,
+    failures,
+  };
 }
