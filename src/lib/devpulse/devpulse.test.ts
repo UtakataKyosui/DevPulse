@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { buildDashboardModel } from '../../components/devpulse/model.ts';
+import { collectReportInput } from '../reports/model.ts';
 import {
   assessDeadline,
   assessFreshness,
@@ -15,8 +17,10 @@ import {
   selectFeaturedMilestone,
   selectPublicData,
   snapshotFileSchema,
+  sortProjectsByTier,
   toPublicView,
 } from './index.ts';
+import { buildProjectSidebar } from './project-sidebar.ts';
 import type {
   GitHubMilestoneSnapshot,
   GitHubProjectSnapshot,
@@ -526,5 +530,69 @@ describe('ProjectView independence', () => {
     const v = view('sample-empty');
     expect(v?.progressPercent).toBeNull();
     expect(v?.health.label).toBe('計画中');
+  });
+});
+
+describe('Tier による表示順', () => {
+  const tiers = ['low', 'medium', 'high', 'medium', 'high', 'low'] as const;
+  const definitions: ProjectDefinition[] = tiers.map((tier, index) => ({
+    id: `p${index}`,
+    slug: `p${index}`,
+    name: `P${index}`,
+    description: '',
+    repository: `o/p${index}`,
+    published: true,
+    lifecycle: 'active',
+    tier,
+  }));
+  const tierSnapshots: GitHubProjectSnapshot[] = definitions.map((d) => ({
+    repository: d.repository,
+    visibility: 'public',
+    milestones: [],
+    lastActivityAt: '2026-10-12T00:00:00Z',
+    issueClosures: [],
+    fetchedAt: '2026-10-12T12:00:00Z',
+  }));
+  // Tier(high → medium → low)、同 Tier は配列内の順序
+  const expected = ['p2', 'p4', 'p1', 'p3', 'p0', 'p5'];
+
+  it('sortProjectsByTier は入力を変更せず安定に並べる', () => {
+    const input = [...definitions];
+    expect(sortProjectsByTier(input, (d) => d.tier).map((d) => d.id)).toEqual(
+      expected,
+    );
+    expect(input).toEqual(definitions);
+  });
+
+  it('Home・サイドバー・日次レポートの並びが一致する', () => {
+    const projectViews = buildProjectViews(definitions, tierSnapshots, {
+      now: NOW,
+    });
+    const home = buildDashboardModel(projectViews).cards.map((c) => c.id);
+    const sidebar = buildProjectSidebar(definitions).flatMap((group) =>
+      group.items.map((item) => item.link.split('/')[2]),
+    );
+    const report = collectReportInput(
+      '2026-10-12',
+      definitions,
+      tierSnapshots,
+      null,
+      NOW,
+    ).projects.map((p) => p.name.toLowerCase());
+    expect(home).toEqual(expected);
+    expect(sidebar).toEqual(expected);
+    expect(report).toEqual(expected);
+  });
+
+  it('不正な tier と tier 欠落を拒否する', () => {
+    const base = config.projects[0];
+    expect(
+      projectConfigSchema.safeParse({ projects: [{ ...base, tier: 'top' }] })
+        .success,
+    ).toBe(false);
+    const { tier: _tier, ...withoutTier } = base;
+    expect(
+      projectConfigSchema.safeParse({ projects: [withoutTier] }).success,
+    ).toBe(false);
   });
 });

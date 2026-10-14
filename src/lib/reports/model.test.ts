@@ -20,6 +20,7 @@ const definition: ProjectDefinition = {
   repository: 'owner/repo',
   published: true,
   lifecycle: 'active',
+  tier: 'medium',
   featuredMilestoneNumber: 1,
 };
 const snapshot: GitHubProjectSnapshot = {

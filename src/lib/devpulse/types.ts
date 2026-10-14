@@ -7,6 +7,10 @@ export const LIFECYCLES = [
 ] as const;
 export type Lifecycle = (typeof LIFECYCLES)[number];
 
+/** 表示順の昇順(先頭ほど上位) */
+export const TIERS = ['high', 'medium', 'low'] as const;
+export type Tier = (typeof TIERS)[number];
+
 export const PRIORITY_LABELS = {
   highest: '最優先',
   next: '次に着手',
@@ -29,6 +33,8 @@ export interface ProjectDefinition {
   /** 明示的 opt-in のみ公開 */
   published: boolean;
   lifecycle: Lifecycle;
+  /** 表示順の優先度(high → medium → low)。表示順以外には使わない */
+  tier: Tier;
   /** 着手優先度。省略時は unset */
   priority?: Priority;
   /** repo 内の Milestone 番号 */

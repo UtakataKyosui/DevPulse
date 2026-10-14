@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { repositoryKey } from './repository-key.ts';
-import { LIFECYCLES } from './types.ts';
+import { LIFECYCLES, TIERS } from './types.ts';
 
 const repositorySchema = z
   .string()
@@ -14,6 +14,7 @@ export const projectDefinitionSchema = z.strictObject({
   repository: repositorySchema,
   published: z.boolean(),
   lifecycle: z.enum(LIFECYCLES),
+  tier: z.enum(TIERS),
   priority: z.enum(['highest', 'next', 'later', 'unset']).optional(),
   featuredMilestoneNumber: z.number().int().positive().optional(),
 });
