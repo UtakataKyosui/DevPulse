@@ -22,7 +22,7 @@ pnpm run config:seed                                            # ローカル�
 pnpm run config:seed --remote --namespace-id <CONFIG namespace id>
 ```
 
-ローカルの初期投入は、バインディング名を名前空間IDとして`.wrangler/state`配下に書き込みます。
+ローカルの初期投入は、バインディング名を名前空間IDとして`apps/worker/.wrangler/state`配下に書き込みます。
 本番のIDは`cf deploy`が`CONFIG`を作成した後、Cloudflareダッシュボードで確認してください。
 
 ### 履歴とロールバック
@@ -84,11 +84,16 @@ DEVPULSE_PROJECTS_FIXTURE=packages/domain/fixtures/projects.sample.json pnpm run
 3. `GET /api/projects`が8プロジェクトを返すことを確認し、**Publish daily reports**ワークフローを実行してビルド時に取得します。
 4. ホーム、サイドバー、詳細ページが移行前と同じ表示であることを確認します。`/admin`での変更がAPIとホームに即座に反映され、次のビルド後にサイドバーと詳細ページに反映されることも確認します。
 
-### `cf dev`でのローカル管理画面
+### ローカル管理画面
 
-`cf dev`は`.dev.vars`の`ADMIN_AUTH_BYPASS`を読み込みません。
-`pnpm run config:seed`の後、`pnpm --filter @devpulse/worker exec wrangler dev --var ADMIN_AUTH_BYPASS:1`で
-Workerを起動し、`http://localhost:8787/admin`を開いてください。
+先に`pnpm run build`で静的アセットと管理画面を生成します。
+`pnpm run config:seed`の後、`pnpm run dev:worker`でWorkerを起動し、
+`http://localhost:8787/admin`を開いてください。初期化用のサンプルを使う場合は
+`pnpm run config:seed --source packages/domain/fixtures/projects.sample.json`を指定します。
+
+`apps/worker/wrangler.local.jsonc`はローカル専用です。KV・D1をローカルで動かし、
+ループバック限定の`ADMIN_AUTH_BYPASS=1`を指定します。AI bindingは含まず、AI生成はテストのモックで検証します。
+本番はこの設定を使用せず、`pnpm run deploy`からCloudflare設定と`cf`で公開します。
 
 
 ### リポジトリの優先度

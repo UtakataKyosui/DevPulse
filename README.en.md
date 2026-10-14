@@ -45,7 +45,8 @@ The pnpm workspace separates applications and shared packages. Run commands from
 Edit project settings, including work priority, in the admin console; CONFIG KV stores them.
 Applications reference shared packages with `workspace:*`. One Worker still serves the public site and authenticated admin console.
 
-Use `pnpm run dev` for the public site and `pnpm run dev:worker` for the Worker.
+Use `pnpm run dev` for the public site and `pnpm run dev:worker` for a Worker with local KV and D1.
+The local Worker does not connect to remote AI.
 See the [development skill](.agents/skills/devpulse-development/SKILL.md) for local admin authentication and seeding.
 Rebuild admin assets with `pnpm run admin:build` after changing the admin UI.
 

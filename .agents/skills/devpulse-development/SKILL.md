@@ -22,6 +22,15 @@ pnpm run preview
 `.projects-cache/config.json`を必要とする。サンプルデータへの自動フォールバックを追加しない。
 検証にはリポジトリの`AGENTS.md`にある共通ルールを適用する。
 
+## WorkspaceとローカルWorker
+
+`apps/web`・`apps/admin`・`apps/worker`と`packages/domain`・`packages/ui`をpnpm workspaceで管理する。
+共通コードは`workspace:*`で参照し、アプリ間でソースを直接importしない。結合テストはルートの`tests/`に置く。
+
+`pnpm run dev`は公開サイト、`pnpm run dev:worker`はローカル専用のWrangler設定でWorkerを起動する。
+先に`pnpm run build`で公開・管理アセットを生成する。管理画面の初期設定は[プロジェクト設定](references/projects.md#ローカル管理画面)を参照する。
+Workerのローカル設定はAIに接続しない。本番デプロイは従来どおり`cf`を使う。
+
 ## 作業に応じた参照資料
 
 詳細資料は言語別に分けず、日本語で`references/`に配置する。

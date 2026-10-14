@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "cf dev",
+    "dev": "wrangler dev --config wrangler.local.jsonc",
     "deploy": "cf deploy",
     "deploy:check": "cf deploy --dry-run",
     "typecheck": "tsc --noEmit"

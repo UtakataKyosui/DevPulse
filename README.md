@@ -43,7 +43,8 @@ pnpm workspaceでアプリと共通パッケージを分けています。コマ
 着手優先度などの設定は管理画面で編集し、CONFIG KVに保存します。
 各アプリは共通パッケージを`workspace:*`で参照します。公開サイトと認証付き管理画面は同じWorkerから配信します。
 
-`pnpm run dev`は公開サイト、`pnpm run dev:worker`はWorkerを起動します。
+`pnpm run dev`は公開サイト、`pnpm run dev:worker`はローカル専用のKV・D1でWorkerを起動します。
+ローカルWorkerはAIへのリモート接続を行いません。
 管理画面のローカル認証と初期データ投入は[開発スキル](.agents/skills/devpulse-development/SKILL.md)を参照してください。
 管理画面のアセットを変更したら`pnpm run admin:build`で再生成します。
 

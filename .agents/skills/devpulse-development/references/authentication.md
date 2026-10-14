@@ -37,7 +37,8 @@ Workerも有効なJWTのないリクエストを拒否しますが、Accessを�
 
 ### ローカル開発時の認証バイパスと本番環境
 
-ローカル開発に限り、`apps/worker/.dev.vars`（コミット禁止）を作成し、`ADMIN_AUTH_BYPASS=1`を設定します。
+`pnpm run dev:worker`はローカル専用の`apps/worker/wrangler.local.jsonc`を使い、
+`ADMIN_AUTH_BYPASS=1`を指定します。追加のローカルシークレットは`apps/worker/.dev.vars`（コミット禁止）に置きます。
 バイパスが有効になるのは、変数が厳密に`1`で、リクエストのホストが`localhost`、
 `127.0.0.1`、`[::1]`のいずれかの場合だけです。`apps/worker/cloudflare.config.ts`には宣言していないため、
 デプロイ済みWorkerには存在しません。仮に設定しても、実際のホスト名へのリクエストには
