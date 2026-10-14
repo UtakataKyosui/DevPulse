@@ -15,10 +15,10 @@ export default defineConfig({
       REPORTS_TOKEN: bindings.secret(),
       GITHUB_TOKEN: bindings.secret(),
       ADMIN_ALLOWED_EMAILS: bindings.secret(),
-      // Empty values keep /admin closed (503).
+      // Read from the deploy environment. Empty values keep /admin closed (503).
       ACCESS_SETTINGS: bindings.json({
-        teamDomain: 'REDACTED_TEAM_DOMAIN',
-        aud: 'REDACTED_AUD',
+        teamDomain: process.env.ACCESS_TEAM_DOMAIN ?? '',
+        aud: process.env.ACCESS_AUD ?? '',
       }),
       // Owner whose public repositories can be added; never derived from the user.
       ADMIN_SETTINGS: bindings.json({ githubOwner: 'UtakataKyosui' }),

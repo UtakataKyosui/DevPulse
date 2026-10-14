@@ -40,11 +40,16 @@ jobs:
       - run: pnpm run test
       - run: pnpm run build
       - run: pnpm exec cf deploy --dry-run
+        env:
+          ACCESS_TEAM_DOMAIN: ${{ secrets.ACCESS_TEAM_DOMAIN }}
+          ACCESS_AUD: ${{ secrets.ACCESS_AUD }}
       - name: Publish articles and RSS
         run: pnpm exec cf deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ACCESS_TEAM_DOMAIN: ${{ secrets.ACCESS_TEAM_DOMAIN }}
+          ACCESS_AUD: ${{ secrets.ACCESS_AUD }}
       - name: Verify published feed and acknowledge
         run: |
           node scripts/verify-reports.ts

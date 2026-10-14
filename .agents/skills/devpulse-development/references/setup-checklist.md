@@ -17,8 +17,8 @@ Accessで保護する本番ドメインを用意し、`DEVPULSE_SITE_URL`には�
 | 4 | GitHubとWorkerのシークレット | `REPORTS_TOKEN` | 両方に同じ32文字以上のランダムな文字列。`pnpm run setup:secrets`で生成して両方に登録できる（Workerを作成した後に実行する） | レポートAPIがリクエストを拒否し、`reports:fetch`が失敗する |
 | 5 | Workerシークレット | `GITHUB_TOKEN` | 公開リポジトリの読み取り専用fine-grained PAT（[GitHubトークン](synchronization.md#githubトークン)） | `cf deploy`が「required secrets have not been set」で失敗し、デプロイされない |
 | 6 | Cloudflare Zero Trust | Access Application | `/admin*`と`/api/admin/*`を保護するセルフホスト型アプリ（[Access設定](authentication.md#accessの設定)） | Accessがログインを要求せず、Workerの検証だけが防御になる |
-| 7 | `cloudflare.config.ts` | `ACCESS_SETTINGS.teamDomain` | `<team>.cloudflareaccess.com`。設定後にデプロイする | 空のままでは`/admin`と`/api/admin/*`が503を返す |
-| 8 | `cloudflare.config.ts` | `ACCESS_SETTINGS.aud` | Access ApplicationのAUDタグ。設定後にデプロイする | 空のままでは`/admin`と`/api/admin/*`が503を返す |
+| 7 | リポジトリシークレット | `ACCESS_TEAM_DOMAIN` | `<team>.cloudflareaccess.com`。設定後にデプロイする | 空のままでは`/admin`と`/api/admin/*`が503を返す |
+| 8 | リポジトリシークレット | `ACCESS_AUD` | Access ApplicationのAUDタグ。設定後にデプロイする | 空のままでは`/admin`と`/api/admin/*`が503を返す |
 | 9 | Workerシークレット | `ADMIN_ALLOWED_EMAILS` | `/admin`で許可するメールアドレスのカンマ区切りリスト | `/admin`と`/api/admin/*`が503を返す |
 | 10 | Cloudflareダッシュボード | `workers.dev`とPreview URLs | 無効化する（[設定手順](authentication.md#workersdevとプレビューurlの無効化)） | 保護されていないホスト名から到達できる |
 

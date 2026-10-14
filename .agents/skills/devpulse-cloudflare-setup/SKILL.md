@@ -71,7 +71,7 @@ printf '%s' '<owner-email>' | pnpm exec wrangler secret put ADMIN_ALLOWED_EMAILS
 
 登録後に`pnpm run doctor`で`ADMIN_ALLOWED_EMAILS`が`OK`になることを確認する。
 Wranglerのスコープ不足の警告が出た場合は`pnpm exec wrangler login`をやり直す。
-登録だけでは`/admin`は開かず、手順3で`ACCESS_SETTINGS`を埋めてデプロイするまで503を返す。
+登録だけでは`/admin`は開かず、手順3で`ACCESS_TEAM_DOMAIN`と`ACCESS_AUD`を登録してデプロイするまで503を返す。
 
 ## 3. Access（管理画面の保護）
 
@@ -112,8 +112,9 @@ Wranglerのスコープ不足の警告が出た場合は`pnpm exec wrangler logi
    ポリシーを後から付ける場合は、`applications update <app-id>`を使う。`app-id`は位置引数で、
    リクエストはPUTのため`name`と`destinations`も含めて全体を渡す。
 
-5. `cloudflare.config.ts`の`ACCESS_SETTINGS`に、チームドメインを`teamDomain`、AUDを`aud`として記載する。
-   コミットしてデプロイする（`reports.yml`を実行する）。
+5. チームドメインをリポジトリシークレット`ACCESS_TEAM_DOMAIN`、AUDを`ACCESS_AUD`に登録する
+   （`gh secret set ACCESS_TEAM_DOMAIN`、`gh secret set ACCESS_AUD`）。値はコミットしない。
+   `cloudflare.config.ts`の`ACCESS_SETTINGS`がデプロイ時にこの2つを読むので、デプロイする（`reports.yml`を実行する）。
 
 6. `workers.dev`とPreview URLsを無効化する。この操作に対応する`cf`コマンドは見つかっていないため、
    [設定手順](../devpulse-development/references/authentication.md#workersdevとプレビューurlの無効化)に従い、ダッシュボードで行う。
@@ -151,13 +152,15 @@ Wranglerのスコープ不足の警告が出た場合は`pnpm exec wrangler logi
 
    ```bash
    DEVPULSE_PROJECTS_FIXTURE=src/data/devpulse/projects.sample.json DEVPULSE_SITE_URL=<production-origin> pnpm run build
-   cf deploy --dry-run
+   ACCESS_TEAM_DOMAIN=<team>.cloudflareaccess.com ACCESS_AUD=<aud> cf deploy --dry-run
    ```
+
+   `ACCESS_TEAM_DOMAIN`と`ACCESS_AUD`は`cf deploy`を実行するシェルの環境変数で渡す。未指定のまま`cf deploy`すると`ACCESS_SETTINGS`が空になり、`/admin`が閉じる。
 
 4. `cloudflare.config.ts`で`bindings.secret()`と宣言したシークレット（`REPORTS_TOKEN`、`GITHUB_TOKEN`、`ADMIN_ALLOWED_EMAILS`）が
    Workerに未登録だと、`cf deploy`は「required secrets have not been set」で失敗する。`pnpm run doctor`で先に確認する。
    `GITHUB_TOKEN`はfine-grained PATで、値は標準入力で`wrangler secret put GITHUB_TOKEN --name devpulse`に渡す。
-   承認を得てから`cf deploy`を実行する。`CONFIG`のKV名前空間が作られる（シークレット不足で失敗しても、名前空間は作成済みになる）。
+   承認を得てから、手順3と同じ環境変数を付けて`cf deploy`を実行する。`CONFIG`のKV名前空間が作られる（シークレット不足で失敗しても、名前空間は作成済みになる）。
    シークレット不足で失敗した後に再実行すると、`cf`が作成済みの名前空間を記憶しておらず、
    「a namespace with this account ID and title already exists」で失敗する。`cf kv namespaces list`で
    `devpulse-config`のIDを確認し、`cloudflare.config.ts`の`CONFIG: bindings.kv({ id: '<id>' })`に指定してから再実行する。
@@ -179,7 +182,7 @@ Wranglerのスコープ不足の警告が出た場合は`pnpm exec wrangler logi
 
 | 症状 | 確認すること |
 |---|---|
-| `/admin`が503のまま | `ACCESS_SETTINGS`の`teamDomain`と`aud`が空でないか。デプロイ後か。`ADMIN_ALLOWED_EMAILS`が登録されているか |
+| `/admin`が503のまま | リポジトリシークレット`ACCESS_TEAM_DOMAIN`と`ACCESS_AUD`が空でないか。登録後にデプロイしたか。`ADMIN_ALLOWED_EMAILS`が登録されているか |
 | `/admin`が403 | `aud`がApplicationのAUDと一致しているか。許可リストのメールアドレスがログインしたアカウントと一致しているか |
 | トークンの作成が権限エラー | 作成に使う認証の権限。ダッシュボードで作成する |
 | デプロイが権限エラー | エラーに表示された権限をトークンに追加し、チェックリストの[必要な権限](../devpulse-development/references/setup-checklist.md#必要な権限)の表を更新する |
