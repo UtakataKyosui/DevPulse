@@ -3,6 +3,7 @@ import projects from '../data/devpulse/projects.json';
 import snapshots from '../data/devpulse/snapshots.json';
 import worker from './index.ts';
 import { type Env, SNAPSHOT_KEY, syncSnapshots } from './sync.ts';
+import { configKv } from './test-config.ts';
 
 function storage(initial: unknown = null) {
   let value = initial;
@@ -38,7 +39,7 @@ describe('scheduled snapshot sync', () => {
       });
     });
     await syncSnapshots(
-      { SNAPSHOTS: kv } as unknown as Env,
+      { SNAPSHOTS: kv, CONFIG: configKv() } as unknown as Env,
       fetcher,
       new Date('2026-10-13T01:00:00Z'),
     );
@@ -66,7 +67,11 @@ describe('scheduled snapshot sync', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     await syncSnapshots(
-      { SNAPSHOTS: kv, GITHUB_TOKEN: secret } as unknown as Env,
+      {
+        SNAPSHOTS: kv,
+        CONFIG: configKv(),
+        GITHUB_TOKEN: secret,
+      } as unknown as Env,
       fetcher,
       new Date('2026-10-13T01:00:00Z'),
     );
@@ -87,7 +92,11 @@ describe('scheduled snapshot sync', () => {
     );
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     await syncSnapshots(
-      { SNAPSHOTS: kv, GITHUB_TOKEN: 't' } as unknown as Env,
+      {
+        SNAPSHOTS: kv,
+        CONFIG: configKv(),
+        GITHUB_TOKEN: 't',
+      } as unknown as Env,
       fetcher,
       new Date('2026-10-13T01:00:00Z'),
     );
@@ -106,7 +115,11 @@ describe('scheduled snapshot sync', () => {
           status: String(input).endsWith('/DevPulse') ? 404 : 503,
         }),
     );
-    await syncSnapshots({ SNAPSHOTS: kv } as unknown as Env, fetcher, now);
+    await syncSnapshots(
+      { SNAPSHOTS: kv, CONFIG: configKv() } as unknown as Env,
+      fetcher,
+      now,
+    );
     const data = kv.value() as typeof snapshots;
     expect(data.snapshots.some((s) => s.repository.endsWith('/DevPulse'))).toBe(
       false,
@@ -118,7 +131,7 @@ describe('scheduled snapshot sync', () => {
   });
 
   it('returns 503 before first sync and rejects writes to the public API', async () => {
-    const env = { SNAPSHOTS: storage() } as unknown as Env;
+    const env = { SNAPSHOTS: storage(), CONFIG: configKv() } as unknown as Env;
     expect(
       (
         await worker.fetch(
@@ -135,5 +148,114 @@ describe('scheduled snapshot sync', () => {
         )
       ).status,
     ).toBe(405);
+  });
+});
+
+describe('KV-backed project configuration', () => {
+  const [first, ...rest] = projects.projects;
+
+  it('hides a repository from /api/snapshots and /api/projects once unpublished', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-14T00:00:00Z'));
+    try {
+      const config = configKv();
+      const env = {
+        SNAPSHOTS: storage(snapshots),
+        CONFIG: config,
+      } as unknown as Env;
+      const get = async (path: string) =>
+        (
+          await worker.fetch(new Request(`https://example.com${path}`), env)
+        ).json() as Promise<{
+          snapshots?: { repository: string }[];
+          projects?: { repository: string }[];
+        }>;
+      expect(
+        (await get('/api/snapshots')).snapshots?.map((s) => s.repository),
+      ).toContain(first.repository);
+      expect(
+        (await get('/api/projects')).projects?.map((p) => p.repository),
+      ).toContain(first.repository);
+
+      config.set([{ ...first, published: false }, ...rest]);
+      expect(
+        (await get('/api/snapshots')).snapshots?.map((s) => s.repository),
+      ).not.toContain(first.repository);
+      expect(
+        (await get('/api/projects')).projects?.map((p) => p.repository),
+      ).not.toContain(first.repository);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('returns /api/projects in tier order', async () => {
+    const config = configKv([
+      { ...first, tier: 'low' },
+      ...rest.map((p) => ({ ...p, tier: 'medium' })),
+      { ...rest[0], id: 'top', slug: 'top', repository: 'o/top', tier: 'high' },
+    ]);
+    const response = await worker.fetch(
+      new Request('https://example.com/api/projects'),
+      { SNAPSHOTS: storage(), CONFIG: config } as unknown as Env,
+    );
+    const body = (await response.json()) as { projects: { id: string }[] };
+    expect(body.projects[0]?.id).toBe('top');
+    expect(body.projects.at(-1)?.id).toBe(first.id);
+  });
+
+  it('stops syncing unpublished repositories and drops their snapshots', async () => {
+    const kv = storage(snapshots);
+    const fetcher = vi.fn(async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url.includes('?')) return Response.json([]);
+      return Response.json({ private: false, visibility: 'public' });
+    });
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    await syncSnapshots(
+      {
+        SNAPSHOTS: kv,
+        CONFIG: configKv([{ ...first, published: false }, ...rest]),
+      } as unknown as Env,
+      fetcher,
+      new Date('2026-10-13T15:00:00Z'),
+    );
+    const urls = fetcher.mock.calls.map(([input]) => String(input));
+    expect(urls.some((url) => url.includes(first.repository))).toBe(false);
+    expect(
+      (kv.value() as typeof snapshots).snapshots.map((s) => s.repository),
+    ).not.toContain(first.repository);
+  });
+
+  it('records an error and neither syncs nor falls back when config is missing', async () => {
+    const kv = storage(snapshots);
+    const fetcher = vi.fn();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const missing = { get: async () => null, put: async () => {} };
+    await expect(
+      syncSnapshots(
+        { SNAPSHOTS: kv, CONFIG: missing } as unknown as Env,
+        fetcher,
+      ),
+    ).rejects.toThrow('config:projects:v1');
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(kv.put).not.toHaveBeenCalled();
+    expect(String(error.mock.calls[0]?.[0])).toContain(
+      'snapshot_sync_config_unavailable',
+    );
+    error.mockRestore();
+  });
+
+  it('answers 503 rather than a fixture when config is missing', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const env = {
+      SNAPSHOTS: storage(snapshots),
+      CONFIG: { get: async () => null, put: async () => {} },
+    } as unknown as Env;
+    for (const path of ['/api/projects', '/api/snapshots'])
+      expect(
+        (await worker.fetch(new Request(`https://example.com${path}`), env))
+          .status,
+      ).toBe(503);
   });
 });

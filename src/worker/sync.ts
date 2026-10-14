@@ -1,17 +1,11 @@
 import type { InferEnv, UnwrapConfig } from 'cf/config';
 import type config from '../../cloudflare.config.ts';
-import projectsJson from '../data/devpulse/projects.json';
 import { normalizeProjectSnapshot } from '../lib/devpulse/normalize.ts';
-import {
-  projectConfigSchema,
-  snapshotFileSchema,
-} from '../lib/devpulse/schema.ts';
+import { snapshotFileSchema } from '../lib/devpulse/schema.ts';
+import { readPublishedProjects } from './config-store.ts';
 
 export type Env = InferEnv<UnwrapConfig<typeof config>['worker']>;
 export const SNAPSHOT_KEY = 'snapshots:v1';
-const projects = projectConfigSchema
-  .parse(projectsJson)
-  .projects.filter((p) => p.published);
 const MAX_AGE = 48 * 60 * 60 * 1000;
 
 class GitHubError extends Error {
@@ -60,10 +54,23 @@ async function pages(
 }
 
 export async function syncSnapshots(
-  env: Pick<Env, 'SNAPSHOTS'> & { GITHUB_TOKEN?: string },
+  env: Pick<Env, 'SNAPSHOTS' | 'CONFIG'> & { GITHUB_TOKEN?: string },
   fetcher: typeof fetch = fetch,
   now = new Date(),
 ): Promise<void> {
+  // 設定が無い・不正なときは何も書かず(既存 Snapshot も保持)、fixture へは戻さない。
+  let projects: Awaited<ReturnType<typeof readPublishedProjects>>;
+  try {
+    projects = await readPublishedProjects(env.CONFIG);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: 'snapshot_sync_config_unavailable',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      }),
+    );
+    throw error;
+  }
   const previous = snapshotFileSchema.parse(
     (await env.SNAPSHOTS.get(SNAPSHOT_KEY, 'json')) ?? { snapshots: [] },
   );

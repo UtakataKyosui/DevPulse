@@ -2,6 +2,7 @@ import {
   projectConfigSchema,
   storedProjectConfigSchema,
 } from '../lib/devpulse/schema.ts';
+import { sortProjectsByTier } from '../lib/devpulse/sort-projects.ts';
 import type { ProjectDefinition } from '../lib/devpulse/types.ts';
 
 export const CONFIG_KEY = 'config:projects:v1';
@@ -71,6 +72,17 @@ export async function readProjectConfig(
   const config = await readStored(kv);
   if (!config) throw new ConfigMissingError();
   return config;
+}
+
+/** 公開対象のみを共通の表示順(Tier → 配列順)で返す。実行時処理はこれを使う。 */
+export async function readPublishedProjects(
+  kv: ConfigKv,
+): Promise<ProjectDefinition[]> {
+  const { projects } = await readProjectConfig(kv);
+  return sortProjectsByTier(
+    projects.filter((project) => project.published),
+    (project) => project.tier,
+  );
 }
 
 /**

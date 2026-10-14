@@ -1,11 +1,12 @@
 import { z } from 'zod';
-import projectsJson from '../data/devpulse/projects.json';
-import {
-  projectConfigSchema,
-  snapshotFileSchema,
-} from '../lib/devpulse/schema.ts';
+import { snapshotFileSchema } from '../lib/devpulse/schema.ts';
 import { previousReportDate, reportDateSchema } from '../lib/reports/model.ts';
 import { adminGate, isAdminPath } from './admin-auth.ts';
+import {
+  ConfigInvalidError,
+  ConfigMissingError,
+  readPublishedProjects,
+} from './config-store.ts';
 import { ReportStore } from './report-store.ts';
 import {
   canPublish,
@@ -16,10 +17,31 @@ import {
 } from './reports.ts';
 import { type Env, SNAPSHOT_KEY, syncSnapshots } from './sync.ts';
 
-const projects = projectConfigSchema
-  .parse(projectsJson)
-  .projects.filter((p) => p.published);
 const MAX_AGE = 48 * 60 * 60 * 1000;
+
+/** 設定が読めないときは公開せず 503 にする(詳細は返さずログにのみ残す)。 */
+async function configResponse(
+  handler: () => Promise<Response>,
+): Promise<Response> {
+  try {
+    return await handler();
+  } catch (error) {
+    if (
+      !(
+        error instanceof ConfigMissingError ||
+        error instanceof ConfigInvalidError
+      )
+    )
+      throw error;
+    console.error(
+      JSON.stringify({ event: 'config_unavailable', error: error.message }),
+    );
+    return Response.json(
+      { error: 'Project configuration unavailable' },
+      { status: 503, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+}
 
 export default {
   async fetch(
@@ -93,6 +115,19 @@ export default {
       }
       return new Response('Not found', { status: 404 });
     }
+    if (path === '/api/projects') {
+      if (request.method !== 'GET')
+        return new Response('Method not allowed', {
+          status: 405,
+          headers: { Allow: 'GET' },
+        });
+      return configResponse(async () =>
+        Response.json(
+          { projects: await readPublishedProjects(env.CONFIG) },
+          { headers: { 'Cache-Control': 'no-store' } },
+        ),
+      );
+    }
     if (path === '/api/snapshots') {
       if (request.method !== 'GET')
         return new Response('Method not allowed', {
@@ -106,17 +141,20 @@ export default {
           { status: 503, headers: { 'Cache-Control': 'no-store' } },
         );
       const data = snapshotFileSchema.parse(stored);
-      return Response.json(
-        {
-          snapshots: data.snapshots.filter(
-            (s) =>
-              projects.some((p) => p.repository === s.repository) &&
-              s.visibility === 'public' &&
-              Date.now() - Date.parse(s.fetchedAt) < MAX_AGE,
-          ),
-        },
-        { headers: { 'Cache-Control': 'no-store' } },
-      );
+      return configResponse(async () => {
+        const projects = await readPublishedProjects(env.CONFIG);
+        return Response.json(
+          {
+            snapshots: data.snapshots.filter(
+              (s) =>
+                projects.some((p) => p.repository === s.repository) &&
+                s.visibility === 'public' &&
+                Date.now() - Date.parse(s.fetchedAt) < MAX_AGE,
+            ),
+          },
+          { headers: { 'Cache-Control': 'no-store' } },
+        );
+      });
     }
     if (path.startsWith('/api/'))
       return new Response('Not found', { status: 404 });

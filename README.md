@@ -144,10 +144,10 @@ so up to about one hour plus the KV delay and build time.
 
 ## Progress synchronization
 
-`src/data/devpulse/projects.json` defines the published repositories. The Worker
-fetches their public GitHub milestones, closed issues and latest commits every
+The `published` projects in the KV config (`config:projects:v1`) define the repositories. The Worker
+reads it on every run, fetches their public GitHub milestones, closed issues and latest commits every
 hour (`0 * * * *`, UTC), then writes normalized snapshots to Workers KV.
-`GET /api/snapshots` serves KV data to the dashboard without rebuilding the site.
+`GET /api/snapshots` and `GET /api/projects` (tier order) read the config per request. A missing config stops the sync with an error and yields 503, never a fixture. Reports use the config at generation time; past reports are unchanged.
 `cf deploy` provisions the `SNAPSHOTS` namespace and installs the Cron Trigger.
 
 GitHub requests are authenticated with the Worker secret `GITHUB_TOKEN` (see
