@@ -34,4 +34,23 @@ describe('manual priorities', () => {
       'c',
     ]);
   });
+
+  it('uses configured defaults and lets explicit browser choices override them', () => {
+    const cards = [
+      { id: 'a', priority: 'highest' as const },
+      { id: 'b', priority: 'next' as const },
+      { id: 'c', priority: 'unset' as const },
+    ];
+    expect(getPriority({}, 'a', cards[0].priority)).toBe('highest');
+    expect(sortByPriority(cards, {}).map((card) => card.id)).toEqual([
+      'a',
+      'b',
+      'c',
+    ]);
+    expect(
+      sortByPriority(cards, { a: 'unset', c: 'highest' }).map(
+        (card) => card.id,
+      ),
+    ).toEqual(['c', 'b', 'a']);
+  });
 });
