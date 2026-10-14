@@ -1,21 +1,26 @@
 import snapshots from '@devpulse/domain/fixtures/snapshots.sample.json';
 import { describe, expect, it, vi } from 'vitest';
-import { type Env, syncSnapshots } from './sync.ts';
+
+import { ETAG_KEY } from './etag-cache.ts';
+import { type Env, SNAPSHOT_KEY, syncSnapshots } from './sync.ts';
 import {
   acquireSyncLock,
   releaseSyncLock,
   SYNC_LOCK_TTL_MS,
 } from './sync-lock.ts';
+
 import { configKv, database } from './test-config.ts';
 
 function storage(initial: unknown = null) {
-  let value = initial;
+  const values = new Map<string, unknown>();
+  if (initial) values.set(SNAPSHOT_KEY, initial);
   return {
-    get: vi.fn(async () => value),
-    put: vi.fn(async (_key: string, json: string) => {
-      value = JSON.parse(json);
+    get: vi.fn(async (key: string) => values.get(key) ?? null),
+    put: vi.fn(async (key: string, json: string) => {
+      values.set(key, JSON.parse(json));
     }),
-    value: () => value,
+    value: () => values.get(SNAPSHOT_KEY) ?? null,
+    cache: () => values.get(ETAG_KEY) ?? null,
   };
 }
 
@@ -125,5 +130,131 @@ describe('GitHub rate limit', () => {
     expect(fetcher.mock.calls.length).toBeGreaterThan(1);
     log.mockRestore();
     error.mockRestore();
+  });
+});
+
+describe('conditional requests', () => {
+  const milestone = {
+    number: 1,
+    title: 'MVP',
+    description: null,
+    state: 'open',
+    open_issues: 1,
+    closed_issues: 3,
+    due_on: null,
+    html_url: 'https://github.com/o/r/milestone/1',
+    creator: { login: 'ignored' },
+  };
+  const body = (url: string) => {
+    if (url.includes('/milestones?')) return [milestone];
+    if (url.includes('/issues?'))
+      return [
+        { number: 2, closed_at: '2026-10-13T00:00:00Z', body: 'drop me' },
+        {
+          number: 3,
+          closed_at: '2026-10-13T00:00:00Z',
+          pull_request: { url: 'drop' },
+        },
+      ];
+    if (url.includes('/commits?'))
+      return [{ commit: { committer: { date: '2026-10-13T00:00:00Z' } } }];
+    return { private: false, visibility: 'public', owner: 'drop' };
+  };
+  const etagFetcher = (calls: Headers[]) =>
+    vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      calls.push(headers);
+      const url = String(input);
+      if (headers.get('If-None-Match') === `"${url}"`)
+        return new Response(null, { status: 304 });
+      return Response.json(body(url), { headers: { ETag: `"${url}"` } });
+    });
+  const config = () => configKv([snapshotProject()]);
+  const snapshotProject = () => ({
+    id: 'p',
+    slug: 'p',
+    name: 'P',
+    description: '',
+    repository: 'o/r',
+    published: true,
+    lifecycle: 'active',
+    tier: 'high',
+  });
+
+  it('reuses the cached body on 304 and sends the stored ETag', async () => {
+    const kv = storage();
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const env = { SNAPSHOTS: kv, CONFIG: config() } as unknown as Env;
+    const first: Headers[] = [];
+    await syncSnapshots(
+      env,
+      etagFetcher(first),
+      new Date('2026-10-13T01:00:00Z'),
+    );
+    expect(first.every((h) => h.get('If-None-Match') === null)).toBe(true);
+    const initial = structuredClone(kv.value()) as typeof snapshots;
+    const second: Headers[] = [];
+    await syncSnapshots(
+      env,
+      etagFetcher(second),
+      new Date('2026-10-13T01:30:00Z'),
+    );
+    expect(second).toHaveLength(first.length);
+    expect(second.every((h) => h.get('If-None-Match') !== null)).toBe(true);
+    const after = kv.value() as typeof snapshots;
+    expect(after.snapshots[0]?.milestones).toEqual(
+      initial.snapshots[0]?.milestones,
+    );
+    expect(after.snapshots[0]?.issueClosures).toEqual([
+      { number: 2, closedAt: '2026-10-13T00:00:00Z', isPullRequest: false },
+      { number: 3, closedAt: '2026-10-13T00:00:00Z', isPullRequest: true },
+    ]);
+    expect(after.snapshots[0]?.fetchedAt).toBe('2026-10-13T01:30:00.000Z');
+    log.mockRestore();
+  });
+
+  it('stores only the fields the sync uses and never the token', async () => {
+    const kv = storage();
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await syncSnapshots(
+      {
+        SNAPSHOTS: kv,
+        CONFIG: config(),
+        GITHUB_TOKEN: 'github_pat_SECRET_TEST_VALUE',
+      } as unknown as Env,
+      etagFetcher([]),
+      new Date('2026-10-13T01:00:00Z'),
+    );
+    const stored = JSON.stringify(kv.cache());
+    expect(stored).not.toContain('SECRET');
+    expect(stored).not.toContain('drop');
+    expect(stored).not.toContain('ignored');
+    log.mockRestore();
+  });
+
+  it('ignores a corrupted cache and fetches unconditionally', async () => {
+    const kv = storage();
+    await kv.put(ETAG_KEY, JSON.stringify({ 'o/r': 'broken' }));
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const calls: Headers[] = [];
+    await syncSnapshots(
+      { SNAPSHOTS: kv, CONFIG: config() } as unknown as Env,
+      etagFetcher(calls),
+      new Date('2026-10-13T01:00:00Z'),
+    );
+    expect(calls.every((h) => h.get('If-None-Match') === null)).toBe(true);
+    expect((kv.value() as typeof snapshots).snapshots).toHaveLength(1);
+    log.mockRestore();
+  });
+
+  it('does not rewrite an unchanged cache', async () => {
+    const kv = storage();
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const env = { SNAPSHOTS: kv, CONFIG: config() } as unknown as Env;
+    await syncSnapshots(env, etagFetcher([]), new Date('2026-10-13T01:00:00Z'));
+    kv.put.mockClear();
+    await syncSnapshots(env, etagFetcher([]), new Date('2026-10-13T01:30:00Z'));
+    expect(kv.put.mock.calls.map(([key]) => key)).toEqual([SNAPSHOT_KEY]);
+    log.mockRestore();
   });
 });

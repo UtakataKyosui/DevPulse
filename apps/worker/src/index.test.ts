@@ -1,18 +1,23 @@
 import projects from '@devpulse/domain/fixtures/projects.sample.json';
 import snapshots from '@devpulse/domain/fixtures/snapshots.sample.json';
 import { describe, expect, it, vi } from 'vitest';
+import { ETAG_KEY } from './etag-cache.ts';
 import worker from './index.ts';
 import { type Env, SNAPSHOT_KEY, syncSnapshots } from './sync.ts';
 import { acquireSyncLock } from './sync-lock.ts';
 import { configKv, database } from './test-config.ts';
 
 function storage(initial: unknown = null) {
-  let value = initial;
-  const get = vi.fn(async () => value);
-  const put = vi.fn(async (_key: string, json: string) => {
-    value = JSON.parse(json);
-  });
-  return { get, put, value: () => value };
+  const values = new Map<string, unknown>();
+  if (initial) values.set(SNAPSHOT_KEY, initial);
+  return {
+    get: vi.fn(async (key: string) => values.get(key) ?? null),
+    put: vi.fn(async (key: string, json: string) => {
+      values.set(key, JSON.parse(json));
+    }),
+    value: () => values.get(SNAPSHOT_KEY) ?? null,
+    cache: () => values.get(ETAG_KEY) ?? null,
+  };
 }
 
 describe('scheduled snapshot sync', () => {

@@ -20,6 +20,14 @@ Cronの起動は遅延・欠落することがあるため、厳密な30分更�
   更新できなかったリポジトリは最後の成功データ（最大48時間）を保持し、ログに`snapshot_sync_rate_limited`
   （`retryAfterSeconds`、`resetAt`）を記録します。次のCronで再開します。
 
+### 条件付きリクエスト
+
+GitHubの応答のETagを、同期に使う項目だけに絞った本文とともに`SNAPSHOTS`の`sync-etags:v1`に保存します
+（トークンや未使用の項目は保存しません）。次回はページごとに`If-None-Match`を付け、304なら保存した本文を使います。
+壊れた・古い形式の値は捨てて通常の取得に戻ります。変更がなければ書き込みません。
+認証付きの304がレート制限を消費するかは仕様に依存するため、同期完了のログ`snapshot_sync_completed`の
+`notModified`（304の件数）と`rateLimitRemaining`（直近の残量）で実際の消費を確認してください。
+
 ### 手動実行
 
 GitHub Actionsの`Sync snapshots`ワークフロー（`workflow_dispatch`）が`POST /api/sync`を呼びます。
