@@ -118,6 +118,7 @@
 .devpulse-summary__item {
   display: flex;
   flex-direction: column;
+  gap: 0;
   align-items: center;
   margin: 0;
   padding: 8px;
@@ -159,6 +160,7 @@
 }
 .devpulse-card {
   position: relative;
+  height: 100%;
   min-width: 0;
   margin: 0;
   padding: 16px;
@@ -421,21 +423,25 @@
   }
 }
 
-/* shadcn primitives inherit Rspress colors; health stays independent of progress. */
+/* @theme inline resolves bg-primary to the Rspress brand, so set health on the indicator. */
 .devpulse-progress--stable {
-  --color-primary: var(--devpulse-fill-stable);
+  --devpulse-progress-fill: var(--devpulse-fill-stable);
 }
 .devpulse-progress--warning {
-  --color-primary: var(--devpulse-fill-warning);
+  --devpulse-progress-fill: var(--devpulse-fill-warning);
 }
 .devpulse-progress--stalled {
-  --color-primary: var(--devpulse-fill-stalled);
+  --devpulse-progress-fill: var(--devpulse-fill-stalled);
 }
 .devpulse-progress--unknown {
-  --color-primary: var(--devpulse-fill-unknown);
+  --devpulse-progress-fill: var(--devpulse-fill-unknown);
 }
 .devpulse-progress--inactive {
-  --color-primary: var(--devpulse-fill-inactive);
+  --devpulse-progress-fill: var(--devpulse-fill-inactive);
+}
+
+:is(.devpulse-dashboard, .devpulse-detail) [data-slot="progress-indicator"] {
+  background: var(--devpulse-progress-fill);
 }
 
 :where(.devpulse-detail) [data-slot="table"] {

@@ -67,7 +67,7 @@ export function ProjectDashboard({
             <ProjectCard
               key={card.id}
               card={card}
-              priority={getPriority(priorities, card.id)}
+              priority={getPriority(priorities, card.id, card.priority)}
               priorityDisabled={!ready}
               onPriorityChange={(priority) => changePriority(card.id, priority)}
             />

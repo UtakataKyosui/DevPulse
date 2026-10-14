@@ -26,11 +26,15 @@ export function parsePriorities(raw: string | null): Priorities {
   }
 }
 
-export function getPriority(priorities: Priorities, id: string): Priority {
-  return Object.hasOwn(priorities, id) ? priorities[id] : 'unset';
+export function getPriority(
+  priorities: Priorities,
+  id: string,
+  fallback: Priority = 'unset',
+): Priority {
+  return Object.hasOwn(priorities, id) ? priorities[id] : fallback;
 }
 
-export function sortByPriority<T extends { id: string }>(
+export function sortByPriority<T extends { id: string; priority?: Priority }>(
   cards: T[],
   priorities: Priorities,
 ): T[] {
@@ -42,6 +46,7 @@ export function sortByPriority<T extends { id: string }>(
   };
   return [...cards].sort(
     (a, b) =>
-      rank[getPriority(priorities, a.id)] - rank[getPriority(priorities, b.id)],
+      rank[getPriority(priorities, a.id, a.priority)] -
+      rank[getPriority(priorities, b.id, b.priority)],
   );
 }

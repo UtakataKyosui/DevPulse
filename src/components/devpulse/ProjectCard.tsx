@@ -7,7 +7,7 @@ import { isPriority, PRIORITY_LABELS, type Priority } from './priorities.ts';
 
 export function ProjectCard({
   card,
-  priority = 'unset',
+  priority = card.priority,
   priorityDisabled = false,
   onPriorityChange,
 }: {
@@ -51,7 +51,7 @@ export function ProjectCard({
           )}
           <div className="devpulse-card__badges">
             <Badge variant="outline">
-              着手優先度: {PRIORITY_LABELS[card.priority]}
+              着手優先度: {PRIORITY_LABELS[priority]}
             </Badge>
             <Badge variant="secondary">Lifecycle: {card.lifecycleLabel}</Badge>
             <Badge className={`devpulse-tone--${health.tone}`}>
