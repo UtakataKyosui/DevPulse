@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { reportDateSchema, reportSchema } from '@devpulse/domain/reports/model';
 import { z } from 'zod';
-import { reportDateSchema, reportSchema } from '../src/lib/reports/model.ts';
 
 const origin = new URL(process.env.DEVPULSE_SITE_URL ?? '');
 if (origin.protocol !== 'https:' && origin.hostname !== 'localhost')

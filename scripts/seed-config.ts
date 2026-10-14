@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { CONFIG_KEY, writeProjectConfig } from '../src/worker/config-store.ts';
+import { CONFIG_KEY, writeProjectConfig } from '@devpulse/worker/config-store';
 
 // Usage: pnpm run config:seed                               (local `cf dev` KV)
 //        pnpm run config:seed --remote --namespace-id ID (production)
@@ -25,6 +25,8 @@ function wrangler(args: string[]): string {
   return execFileSync(
     'pnpm',
     [
+      '--filter',
+      '@devpulse/worker',
       'exec',
       'wrangler',
       'kv',

@@ -14,7 +14,7 @@ Node.js 22.18以降とpnpmを使用する。`pnpm install --frozen-lockfile`で
 本番のプロジェクト設定を取得せずにローカルで本番用ビルドを確認する場合：
 
 ```bash
-DEVPULSE_PROJECTS_FIXTURE=src/data/devpulse/projects.sample.json pnpm run build
+DEVPULSE_PROJECTS_FIXTURE=packages/domain/fixtures/projects.sample.json pnpm run build
 pnpm run preview
 ```
 

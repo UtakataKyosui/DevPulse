@@ -1,36 +1,16 @@
 {
-  "compilerOptions": {
-    "paths": { "@/*": ["./src/*"] },
-    "lib": ["DOM", "ES2023"],
-    "jsx": "react-jsx",
-    "target": "ES2023",
-    "noEmit": true,
-    "skipLibCheck": true,
-    "useDefineForClassFields": true,
-
-    /* modules */
-    "module": "ESNext",
-    "moduleDetection": "force",
-    "moduleResolution": "bundler",
-    "verbatimModuleSyntax": true,
-    "resolveJsonModule": true,
-    "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-
-    /* type checking */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true
-  },
+  "extends": "./tsconfig.base.json",
   "include": [
-    "docs",
-    "src",
-    "theme",
     "scripts",
-    "rspress.config.ts",
-    "vitest.config.ts"
+    "tests",
+    "vitest.config.ts",
+    "apps/web/src/env.d.ts",
+    "apps/worker/src/local-env.d.ts"
   ],
-  "mdx": {
-    "checkMdx": true
+  "compilerOptions": {
+    "paths": {
+      "@devpulse/ui": ["./packages/ui/src"],
+      "@devpulse/ui/*": ["./packages/ui/src/*"]
+    }
   }
 }

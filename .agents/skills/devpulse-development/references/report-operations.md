@@ -25,7 +25,7 @@ AIとGitHubをモック化しています。生成中の場合はHTTP 409を返�
 既存アーカイブがある環境で、保存済みレポートを取得せずに`deploy:bootstrap`や直接の`cf deploy`を
 実行しないでください。キャッシュのないチェックアウトをデプロイすると、空のアーカイブを公開してしまいます。
 キャッシュは一時的なビルド入力であり、バックアップとして扱わないでください。
-変更を公開する前に`pnpm run test`、`pnpm run check`、`pnpm exec tsc --noEmit`、
+変更を公開する前に`pnpm run test`、`pnpm run check`、`pnpm run typecheck`、
 `pnpm run format`、`pnpm run deploy:check`を実行してください。
 
 Workerの構造化イベント`report_generated`と`report_generation_failed`には対象日が含まれます。

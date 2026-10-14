@@ -1,9 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { parseArgs } from 'node:util';
-import {
-  type EnvPlace,
-  evaluateEnv,
-} from '../src/lib/devpulse/env-manifest.ts';
+import { type EnvPlace, evaluateEnv } from './lib/env-manifest.ts';
 
 // Usage: pnpm run doctor [--worker devpulse]
 // 読み取り専用。名前の有無だけを確認し、値は取得しない。
@@ -28,6 +25,8 @@ const present: Partial<Record<EnvPlace, Set<string> | null>> = {
   'github-variable': names('gh', ['variable', 'list', '--json', 'name']),
   'github-secret': names('gh', ['secret', 'list', '--json', 'name']),
   'worker-secret': names('pnpm', [
+    '--filter',
+    '@devpulse/worker',
     'exec',
     'wrangler',
     'secret',

@@ -3,7 +3,7 @@
 [README](../../../../README.md) | [開発スキル](../SKILL.md)
 
 `/admin*`と`/api/admin/*`はCloudflare Access ApplicationとWorker側の検証
-（`src/worker/admin-auth.ts`）で二重に保護しています。Workerは
+（`apps/worker/src/admin-auth.ts`）で二重に保護しています。Workerは
 `Cf-Access-Jwt-Assertion`を検証します（チームのJWKS
 `https://<team>.cloudflareaccess.com/cdn-cgi/access/certs`によるRS256署名、
 `aud`、`exp`、`nbf`、`iss`）。その後、`email`クレームを許可リストと照合します。
@@ -11,7 +11,7 @@
 トークンなし・不正・期限切れは401、`aud`の不一致・メールアドレスが許可されていない場合は403、
 Access設定が不足している場合は503を返し、アクセスを拒否します。
 
-チームドメインとAUDタグはリポジトリシークレットに登録します。`cloudflare.config.ts`の`ACCESS_SETTINGS`がデプロイ時に環境変数から読み込むため、値はコミットしません。
+チームドメインとAUDタグはリポジトリシークレットに登録します。`apps/worker/cloudflare.config.ts`の`ACCESS_SETTINGS`がデプロイ時に環境変数から読み込むため、値はコミットしません。
 許可するメールアドレスはWorkerシークレットで、ダッシュボードで設定し、シェル引数には指定しないでください。
 
 | 設定 | 値 |
@@ -37,9 +37,9 @@ Workerも有効なJWTのないリクエストを拒否しますが、Accessを�
 
 ### ローカル開発時の認証バイパスと本番環境
 
-ローカル開発に限り、`.dev.vars`（コミット禁止）を作成し、`ADMIN_AUTH_BYPASS=1`を設定します。
+ローカル開発に限り、`apps/worker/.dev.vars`（コミット禁止）を作成し、`ADMIN_AUTH_BYPASS=1`を設定します。
 バイパスが有効になるのは、変数が厳密に`1`で、リクエストのホストが`localhost`、
-`127.0.0.1`、`[::1]`のいずれかの場合だけです。`cloudflare.config.ts`には宣言していないため、
+`127.0.0.1`、`[::1]`のいずれかの場合だけです。`apps/worker/cloudflare.config.ts`には宣言していないため、
 デプロイ済みWorkerには存在しません。仮に設定しても、実際のホスト名へのリクエストには
 有効なAccess JWTが必要です。本番環境では設定しないでください。
 
@@ -59,5 +59,5 @@ done
 偽造ヘッダーでも認証を通過できないことを確認してください。
 `curl -H 'Cf-Access-Jwt-Assertion: x.y.z'`は401を返す必要があります。
 トークンなし、不正な署名、誤った`aud`、期限切れ、許可されていないメールアドレスの自動テストは
-`pnpm test`（`src/worker/admin-auth.test.ts`）で実行します。
+`pnpm test`（`apps/worker/src/admin-auth.test.ts`）で実行します。
 コード変更時にはCloudflareに対する実環境での確認は実施していません。

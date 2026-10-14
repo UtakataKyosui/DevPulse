@@ -6,7 +6,7 @@
 単一のJSONドキュメント`{ revision, updatedAt, updatedBy, projects }`として保存します。
 毎時の同期で全体を上書きする`SNAPSHOTS`とは別の名前空間です。
 `CONFIG`は手動で編集するデータを保持し、独立した管理（バックアップ、アクセス範囲、一覧取得）が必要です。
-読み書きは`src/worker/config-store.ts`が行います。値が存在しない、または不正な場合はエラーとなり、
+読み書きは`apps/worker/src/config-store.ts`が行います。値が存在しない、または不正な場合はエラーとなり、
 リポジトリ内のファイルにはフォールバックしません。書き込み時には`projectConfigSchema`で検証し、
 id・slug・リポジトリの重複を拒否します。書き込み直前に再取得したリビジョンが呼び出し元の
 期待するリビジョンと異なる場合も拒否します。KVにはcompare-and-swapがないため、
@@ -15,7 +15,7 @@ id・slug・リポジトリの重複を拒否します。書き込み直前に�
 初期の8プロジェクトをリビジョン1として一度だけ投入します（既存の値の上書きは拒否します）。
 入力は`scripts/projects.seed.json`です。ファイルベースの設定を廃止した時点の本番一覧の
 スナップショットで、初期投入スクリプトだけが読み込みます。テストとフィクスチャを使うビルドでは
-`src/data/devpulse/projects.sample.json`を使用します。別の入力を使う場合は`--source <file>`を指定してください。
+`packages/domain/fixtures/projects.sample.json`を使用します。別の入力を使う場合は`--source <file>`を指定してください。
 
 ```bash
 pnpm run config:seed                                            # ローカルのcf dev KV
@@ -38,7 +38,7 @@ pnpm run config:seed --remote --namespace-id <CONFIG namespace id>
 
 履歴の値が有効なJSONでない、または所定の配列でない場合、黙って破棄せず、
 履歴エンドポイントと設定の書き込みの両方が503で失敗します。リセットするにはキーを削除します。
-`pnpm exec wrangler kv key delete config:projects:history:v1 --namespace-id <id> --remote`
+`pnpm --filter @devpulse/worker exec wrangler kv key delete config:projects:history:v1 --namespace-id <id> --remote`
 
 ### 反映の遅延
 
@@ -57,18 +57,18 @@ pnpm run config:seed --remote --namespace-id <CONFIG namespace id>
 
 `pnpm run projects:fetch`は`DEVPULSE_SITE_URL`の`GET /api/projects`
 （公開API、トークン不要）から設定を取得し、`.projects-cache/config.json`に保存します。
-`rspress.config.ts`は`docs/projects/_meta.json`を書き込み、手書きのMDXがない公開slugについて
+`apps/web/rspress.config.ts`は`apps/web/docs/projects/_meta.json`を書き込み、手書きのMDXがない公開slugについて
 テンプレートから`docs/projects/<slug>/index.mdx`を生成します（生成ファイルにはマーカーが付き、Gitの追跡対象外です）。
 非公開または削除済みslugの手書きMDXは除外します。取得済み設定がなければビルドは非ゼロで終了し、
 フィクスチャにはフォールバックしません。ローカルやPRのチェックで使う場合は明示的に指定してください。
 
 ```sh
-DEVPULSE_PROJECTS_FIXTURE=src/data/devpulse/projects.sample.json pnpm run build
+DEVPULSE_PROJECTS_FIXTURE=packages/domain/fixtures/projects.sample.json pnpm run build
 ```
 
 `reports.yml`はビルド前に設定を取得するため、取得失敗時はデプロイを停止します。
 `deploy:bootstrap`と`deploy:check`でも設定の取得、またはフィクスチャ変数が必要です。
-`docs/projects/_meta.json`はビルドのたびに書き換わります。フィクスチャの内容はコミットしないでください。
+`apps/web/docs/projects/_meta.json`はビルドのたびに書き換わります。フィクスチャの内容はコミットしないでください。
 
 ### プロジェクトの追加
 
@@ -87,7 +87,7 @@ DEVPULSE_PROJECTS_FIXTURE=src/data/devpulse/projects.sample.json pnpm run build
 ### `cf dev`でのローカル管理画面
 
 `cf dev`は`.dev.vars`の`ADMIN_AUTH_BYPASS`を読み込みません。
-`pnpm run config:seed`の後、`pnpm exec wrangler dev --var ADMIN_AUTH_BYPASS:1`で
+`pnpm run config:seed`の後、`pnpm --filter @devpulse/worker exec wrangler dev --var ADMIN_AUTH_BYPASS:1`で
 Workerを起動し、`http://localhost:8787/admin`を開いてください。
 
 

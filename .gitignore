@@ -13,9 +13,9 @@ doc_build/
 .env*
 .reports-cache/
 .projects-cache/
-docs/projects/.gitignore
-docs/reports/????-??-??/
-docs/public/reports-manifest.json
+apps/web/docs/projects/.gitignore
+apps/web/docs/reports/????-??-??/
+apps/web/docs/public/reports-manifest.json
 
 # IDE
 .vscode/*
@@ -23,4 +23,4 @@ docs/public/reports-manifest.json
 .idea
 
 # Generated admin bundle (pnpm run admin:build)
-src/worker/admin/generated.ts
+apps/admin/dist/

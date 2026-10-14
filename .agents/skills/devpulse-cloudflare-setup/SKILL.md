@@ -66,11 +66,11 @@ Workerのシークレットに登録する。GitHubのシークレットはデ�
 Accessのポリシーとは別の許可リストで、両方を通らないと`/admin`に入れないため、同じメールアドレスにする。
 
 ```bash
-printf '%s' '<owner-email>' | pnpm exec wrangler secret put ADMIN_ALLOWED_EMAILS --name devpulse
+printf '%s' '<owner-email>' | pnpm --filter @devpulse/worker exec wrangler secret put ADMIN_ALLOWED_EMAILS --name devpulse
 ```
 
 登録後に`pnpm run doctor`で`ADMIN_ALLOWED_EMAILS`が`OK`になることを確認する。
-Wranglerのスコープ不足の警告が出た場合は`pnpm exec wrangler login`をやり直す。
+Wranglerのスコープ不足の警告が出た場合は`pnpm --filter @devpulse/worker exec wrangler login`をやり直す。
 登録だけでは`/admin`は開かず、手順3で`ACCESS_TEAM_DOMAIN`と`ACCESS_AUD`を登録してデプロイするまで503を返す。
 
 ## 3. Access（管理画面の保護）
@@ -114,7 +114,7 @@ Wranglerのスコープ不足の警告が出た場合は`pnpm exec wrangler logi
 
 5. チームドメインをリポジトリシークレット`ACCESS_TEAM_DOMAIN`、AUDを`ACCESS_AUD`に登録する
    （`gh secret set ACCESS_TEAM_DOMAIN`、`gh secret set ACCESS_AUD`）。値はコミットしない。
-   `cloudflare.config.ts`の`ACCESS_SETTINGS`がデプロイ時にこの2つを読むので、デプロイする（`reports.yml`を実行する）。
+   `apps/worker/cloudflare.config.ts`の`ACCESS_SETTINGS`がデプロイ時にこの2つを読むので、デプロイする（`reports.yml`を実行する）。
 
 6. `workers.dev`とPreview URLsを無効化する。この操作に対応する`cf`コマンドは見つかっていないため、
    [設定手順](../devpulse-development/references/authentication.md#workersdevとプレビューurlの無効化)に従い、ダッシュボードで行う。
@@ -140,7 +140,7 @@ Wranglerのスコープ不足の警告が出た場合は`pnpm exec wrangler logi
    ```bash
    export DEVPULSE_SITE_URL=<production-origin>
    TOKEN=$(node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('base64url'))")
-   printf '%s' "$TOKEN" | pnpm exec wrangler secret put REPORTS_TOKEN --name devpulse
+   printf '%s' "$TOKEN" | pnpm --filter @devpulse/worker exec wrangler secret put REPORTS_TOKEN --name devpulse
    printf '%s' "$TOKEN" | gh secret set REPORTS_TOKEN
    REPORTS_TOKEN="$TOKEN" pnpm run reports:fetch
    unset TOKEN
@@ -148,22 +148,22 @@ Wranglerのスコープ不足の警告が出た場合は`pnpm exec wrangler logi
 
    `.reports-cache/reports.json`ができたことを確認する。
 
-3. フィクスチャを指定してビルドし、`--dry-run`で確認する。`docs/projects/_meta.json`はビルドで書き換わるため、コミットしない。
+3. フィクスチャを指定してビルドし、`--dry-run`で確認する。`apps/web/docs/projects/_meta.json`はビルドで書き換わるため、コミットしない。
 
    ```bash
-   DEVPULSE_PROJECTS_FIXTURE=src/data/devpulse/projects.sample.json DEVPULSE_SITE_URL=<production-origin> pnpm run build
+   DEVPULSE_PROJECTS_FIXTURE=packages/domain/fixtures/projects.sample.json DEVPULSE_SITE_URL=<production-origin> pnpm run build
    ACCESS_TEAM_DOMAIN=<team>.cloudflareaccess.com ACCESS_AUD=<aud> cf deploy --dry-run
    ```
 
    `ACCESS_TEAM_DOMAIN`と`ACCESS_AUD`は`cf deploy`を実行するシェルの環境変数で渡す。未指定のまま`cf deploy`すると`ACCESS_SETTINGS`が空になり、`/admin`が閉じる。
 
-4. `cloudflare.config.ts`で`bindings.secret()`と宣言したシークレット（`REPORTS_TOKEN`、`GITHUB_TOKEN`、`ADMIN_ALLOWED_EMAILS`）が
+4. `apps/worker/cloudflare.config.ts`で`bindings.secret()`と宣言したシークレット（`REPORTS_TOKEN`、`GITHUB_TOKEN`、`ADMIN_ALLOWED_EMAILS`）が
    Workerに未登録だと、`cf deploy`は「required secrets have not been set」で失敗する。`pnpm run doctor`で先に確認する。
    `GITHUB_TOKEN`はfine-grained PATで、値は標準入力で`wrangler secret put GITHUB_TOKEN --name devpulse`に渡す。
    承認を得てから、手順3と同じ環境変数を付けて`cf deploy`を実行する。`CONFIG`のKV名前空間が作られる（シークレット不足で失敗しても、名前空間は作成済みになる）。
    シークレット不足で失敗した後に再実行すると、`cf`が作成済みの名前空間を記憶しておらず、
    「a namespace with this account ID and title already exists」で失敗する。`cf kv namespaces list`で
-   `devpulse-config`のIDを確認し、`cloudflare.config.ts`の`CONFIG: bindings.kv({ id: '<id>' })`に指定してから再実行する。
+   `devpulse-config`のIDを確認し、`apps/worker/cloudflare.config.ts`の`CONFIG: bindings.kv({ id: '<id>' })`に指定してから再実行する。
 5. `cf kv namespaces list`で`CONFIG`のIDを確認し、初期データを投入する。
 
    ```bash
