@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { pluginTailwindcss } from '@rsbuild/plugin-tailwindcss';
 import { defineConfig } from '@rspress/core';
@@ -49,10 +49,20 @@ if (readFileSync(projectMetaPath, 'utf8') !== projectMeta) {
   writeFileSync(projectMetaPath, projectMeta);
 }
 
+// 公開対象にない slug(非公開・設定から削除済み)の手書き MDX をビルド対象から除外する。
+const publicSlugs = new Set(DEVPULSE_PUBLIC_DATA.projects.map((p) => p.slug));
+const excludedProjectPages = readdirSync(
+  path.join(__dirname, 'docs/projects'),
+  { withFileTypes: true },
+)
+  .filter((entry) => entry.isDirectory() && !publicSlugs.has(entry.name))
+  .map((entry) => `projects/${entry.name}/**`);
+
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
   globalStyles: path.join(__dirname, 'tailwind.css'),
   lang: 'ja',
+  route: { exclude: excludedProjectPages },
   title: 'DevPulse',
   siteOrigin: origin.origin,
   plugins: [
