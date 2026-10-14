@@ -85,7 +85,16 @@ export const projectSnapshotSchema = z.object({
   fetchedAt: dateTime,
 });
 
+export const SNAPSHOT_SCHEMA_VERSION = 1;
+
+/**
+ * KV `snapshots:v1` と `GET /api/snapshots` の本文。
+ * `schemaVersion` と `lastSuccessAt` は導入前に保存した値を読めるよう任意とし、書き込みでは常に付ける。
+ * `lastSuccessAt` は全リポジトリの取得に成功した最後の同期時刻(一部失敗の同期では更新しない)。
+ */
 export const snapshotFileSchema = z.object({
+  schemaVersion: z.literal(SNAPSHOT_SCHEMA_VERSION).optional(),
+  lastSuccessAt: dateTime.nullable().optional(),
   snapshots: z.array(projectSnapshotSchema),
 });
 

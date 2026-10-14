@@ -1,4 +1,7 @@
-import { snapshotFileSchema } from '@devpulse/domain/devpulse/schema';
+import {
+  SNAPSHOT_SCHEMA_VERSION,
+  snapshotFileSchema,
+} from '@devpulse/domain/devpulse/schema';
 import {
   previousReportDate,
   reportDateSchema,
@@ -148,6 +151,8 @@ export default {
         const projects = await readPublishedProjects(env.CONFIG);
         return Response.json(
           {
+            schemaVersion: SNAPSHOT_SCHEMA_VERSION,
+            lastSuccessAt: data.lastSuccessAt ?? null,
             snapshots: data.snapshots.filter(
               (s) =>
                 projects.some((p) => p.repository === s.repository) &&

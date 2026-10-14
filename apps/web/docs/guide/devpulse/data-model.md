@@ -41,6 +41,19 @@ progressPercent = closedIssues / (openIssues + closedIssues) * 100
 - 公開状態を検証できないプロジェクト(スナップショットが無い: 同期未実施・取得失敗)は、private の可能性があるため出力しません。リポジトリは大文字小文字を区別せず照合します。`visibility` は公開前検証用で、`toPublicView` が出力から除去します。
 - GitHub のアクセストークンは成果物・クライアントに出力しません。正規化は未知のフィールドを破棄します。
 
+## スナップショットファイル
+
+`GET /api/snapshots`と KV `snapshots:v1` の本文は次の形式です。
+
+| フィールド | 内容 |
+| --- | --- |
+| `schemaVersion` | 形式のバージョン(現在は `1`)。互換性のない変更では上げます |
+| `lastSuccessAt` | 全リポジトリの取得に成功した最後の同期時刻。一部が失敗した同期では更新しません。未実施なら `null` |
+| `snapshots` | リポジトリごとのスナップショット。各 `fetchedAt` がそのリポジトリの最終成功取得時刻です |
+
+KV の反映遅延で古い内容が一時的に返っても、`lastSuccessAt` と `fetchedAt` で鮮度を判断できます。
+導入前に保存した値は `schemaVersion` と `lastSuccessAt` を持たず、読み取り時に許容します。
+
 ## 主な API
 
 | 名前 | パス |

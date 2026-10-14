@@ -1,5 +1,8 @@
 import { normalizeProjectSnapshot } from '@devpulse/domain/devpulse/normalize';
-import { snapshotFileSchema } from '@devpulse/domain/devpulse/schema';
+import {
+  SNAPSHOT_SCHEMA_VERSION,
+  snapshotFileSchema,
+} from '@devpulse/domain/devpulse/schema';
 import type { InferEnv, UnwrapConfig } from 'cf/config';
 import type config from '../cloudflare.config.ts';
 import { readPublishedProjects } from './config-store.ts';
@@ -118,7 +121,6 @@ export async function syncSnapshots(
         }),
       );
     } catch (error) {
-      failures++;
       console.error(
         JSON.stringify({
           event: 'snapshot_sync_failed',
@@ -126,8 +128,9 @@ export async function syncSnapshots(
           error: error instanceof Error ? error.message : 'Unknown error',
         }),
       );
-      // A missing/private repository must disappear; transient errors keep the last successful data.
+      // A missing/private repository must disappear; it is removed on purpose, not a failed sync.
       if (error instanceof GitHubError && error.status === 404) continue;
+      failures++;
       const old = previous.snapshots.find(
         (s) => s.repository === project.repository && s.visibility === 'public',
       );
@@ -135,7 +138,12 @@ export async function syncSnapshots(
         snapshots.push(old);
     }
   }
-  const data = snapshotFileSchema.parse({ snapshots });
+  const data = snapshotFileSchema.parse({
+    schemaVersion: SNAPSHOT_SCHEMA_VERSION,
+    lastSuccessAt:
+      failures === 0 ? now.toISOString() : (previous.lastSuccessAt ?? null),
+    snapshots,
+  });
   await env.SNAPSHOTS.put(SNAPSHOT_KEY, JSON.stringify(data));
   console.log(
     JSON.stringify({
