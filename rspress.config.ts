@@ -85,11 +85,9 @@ export default defineConfig({
       },
     }),
   ],
-  icon: '/rspress-icon.png',
-  logo: {
-    light: '/rspress-light-logo.png',
-    dark: '/rspress-dark-logo.png',
-  },
+  icon: '/utakata-icon.webp',
+  logo: '/utakata-icon.webp',
+  logoText: 'uDCG',
   builderConfig: {
     plugins: [pluginTailwindcss()],
     source: {
