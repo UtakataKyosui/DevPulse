@@ -9,8 +9,28 @@ export default defineConfig({
     env: {
       SNAPSHOTS: bindings.kv(),
       ASSETS: bindings.assets(),
+      REPORTS: bindings.d1({ name: 'devpulse-reports' }),
+      AI: bindings.ai(),
+      REPORTS_TOKEN: bindings.secret(),
+      REPORT_SETTINGS: bindings.json({
+        model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
+        maxTokens: 1200,
+        maxInputChars: 24000,
+      }),
     },
-    assets: { runWorkerFirst: ['/api/snapshots'] },
-    triggers: [triggers.scheduled({ schedule: '0 * * * *' })],
+    assets: {
+      runWorkerFirst: [
+        '/',
+        '/index.html',
+        '/api/*',
+        '/reports',
+        '/reports/*',
+        '/rss/*',
+      ],
+    },
+    triggers: [
+      triggers.scheduled({ schedule: '0 * * * *' }),
+      triggers.scheduled({ schedule: '0 12 * * *' }),
+    ],
   },
 });

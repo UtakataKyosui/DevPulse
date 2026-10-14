@@ -11,6 +11,9 @@ doc_build/
 .wrangler/
 .dev.vars*
 .env*
+.reports-cache/
+docs/reports/????-??-??/
+docs/public/reports-manifest.json
 
 # IDE
 .vscode/*
