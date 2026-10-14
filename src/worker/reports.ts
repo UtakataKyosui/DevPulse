@@ -1,16 +1,13 @@
 import { z } from 'zod';
-import projectsJson from '../data/devpulse/projects.json';
 import { shiftJstDate } from '../lib/devpulse/jst.ts';
-import {
-  projectConfigSchema,
-  snapshotFileSchema,
-} from '../lib/devpulse/schema.ts';
+import { snapshotFileSchema } from '../lib/devpulse/schema.ts';
 import {
   collectReportInput,
   previousReportDate,
   type Report,
   reportSchema,
 } from '../lib/reports/model.ts';
+import { readPublishedProjects } from './config-store.ts';
 import { ReportStore } from './report-store.ts';
 import { type Env, SNAPSHOT_KEY, syncSnapshots } from './sync.ts';
 
@@ -21,12 +18,12 @@ const settingsSchema = z.object({
   maxTokens: z.number().int().min(100).max(2000),
   maxInputChars: z.number().int().min(1000).max(24000),
 });
-const projects = projectConfigSchema.parse(projectsJson).projects;
 
 export async function safeRepositories(
-  env: Pick<Env, 'SNAPSHOTS'>,
+  env: Pick<Env, 'SNAPSHOTS' | 'CONFIG'>,
   now = new Date(),
 ): Promise<Set<string>> {
+  const projects = await readPublishedProjects(env.CONFIG);
   const data = snapshotFileSchema.parse(
     (await env.SNAPSHOTS.get(SNAPSHOT_KEY, 'json')) ?? { snapshots: [] },
   );
@@ -38,9 +35,7 @@ export async function safeRepositories(
           now.getTime() - Date.parse(s.fetchedAt) >= 0 &&
           now.getTime() - Date.parse(s.fetchedAt) < 48 * 3600000 &&
           projects.some(
-            (p) =>
-              p.published &&
-              p.repository.toLowerCase() === s.repository.toLowerCase(),
+            (p) => p.repository.toLowerCase() === s.repository.toLowerCase(),
           ),
       )
       .map((s) => s.repository.toLowerCase()),
@@ -69,6 +64,8 @@ export async function generateDailyReport(
     const data = snapshotFileSchema.parse(
       await env.SNAPSHOTS.get(SNAPSHOT_KEY, 'json'),
     );
+    // 生成時点の設定を使う。保存済み入力がある再試行では使われない。
+    const projects = await readPublishedProjects(env.CONFIG);
     const previous = await store.input(shiftJstDate(date, -1));
     const input =
       (await store.input(date)) ??

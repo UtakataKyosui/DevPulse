@@ -1,5 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import projectsJson from '../data/devpulse/projects.json';
 import { collectReportInput, type Report } from '../lib/reports/model.ts';
 import worker from './index.ts';
 import { ReportStore } from './report-store.ts';
@@ -10,6 +11,7 @@ import {
   reportsAuthorized,
 } from './reports.ts';
 import type { Env } from './sync.ts';
+import { configKv } from './test-config.ts';
 
 function database() {
   const sqlite = new DatabaseSync(':memory:');
@@ -46,6 +48,7 @@ function environment() {
   const values = new Map<string, unknown>();
   const env = {
     REPORTS: db,
+    CONFIG: configKv(),
     REPORTS_TOKEN: 't'.repeat(32),
     REPORT_SETTINGS: {
       model: REPORT_MODEL,
@@ -145,6 +148,26 @@ describe('D1 daily generation', () => {
         ?.published_at,
     ).toBe('2026-10-14T03:00:00Z');
     expect(await store.get('2026-10-13')).toEqual(saved);
+  });
+
+  it('builds a new report only from repositories published in KV at generation time', async () => {
+    const { env, mocks } = environment();
+    const [hidden, ...others] = projectsJson.projects;
+    mocks.CONFIG.set([{ ...hidden, published: false }, ...others]);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string) =>
+        input.includes('?')
+          ? Response.json([])
+          : Response.json({ private: false, visibility: 'public' }),
+      ),
+    );
+    await generateDailyReport(env, new Date('2026-10-14T00:00:00Z'));
+    const saved = await new ReportStore(env.REPORTS).get('2026-10-13');
+    const repositories = saved?.input.projects.map((p) => p.repository);
+    expect(repositories).not.toContain(hidden.repository);
+    expect(repositories).toHaveLength(others.length);
   });
 
   it('rejects invalid model output without storing a ready report', async () => {
