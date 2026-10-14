@@ -1,12 +1,7 @@
 import { readFileSync } from 'node:fs';
+import { verifyPublishedFeed } from './lib/verify-reports.ts';
 
 const origin = process.env.DEVPULSE_SITE_URL;
 if (!origin) throw new Error('Missing site origin');
 const expected = readFileSync('apps/web/doc_build/rss/reports.xml', 'utf8');
-const response = await fetch(new URL('/rss/reports.xml', origin), {
-  redirect: 'error',
-  signal: AbortSignal.timeout(30000),
-});
-if (!response.ok || (await response.text()) !== expected)
-  throw new Error('Published feed does not match build');
-console.log('Published RSS matches build');
+await verifyPublishedFeed(origin, expected);
