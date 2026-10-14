@@ -12,6 +12,8 @@ doc_build/
 .dev.vars*
 .env*
 .reports-cache/
+.projects-cache/
+docs/projects/.gitignore
 docs/reports/????-??-??/
 docs/public/reports-manifest.json
 
