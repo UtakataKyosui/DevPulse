@@ -13,7 +13,7 @@ export function ReportOverview({
 }) {
   return (
     <section
-      className={`report-overview${compact ? ' report-overview--home' : ''}`}
+      className={`rp-not-doc report-overview${compact ? ' report-overview--home' : ''}`}
       aria-label="最新の日次進捗レポート"
     >
       <div className="report-overview__heading">
