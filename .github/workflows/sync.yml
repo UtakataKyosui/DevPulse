@@ -1,0 +1,26 @@
+name: Sync snapshots
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+# Scheduled syncs run in the Worker (cron 7,37 * * * *); this workflow only triggers one on demand.
+concurrency:
+  group: devpulse-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Request a snapshot sync
+        env:
+          DEVPULSE_SITE_URL: ${{ vars.DEVPULSE_SITE_URL }}
+          REPORTS_TOKEN: ${{ secrets.REPORTS_TOKEN }}
+        run: |
+          curl --fail-with-body --silent --show-error --max-time 300 \
+            --request POST \
+            --header "Authorization: Bearer ${REPORTS_TOKEN}" \
+            "${DEVPULSE_SITE_URL%/}/api/sync"

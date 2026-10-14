@@ -40,7 +40,8 @@ export default defineConfig({
       ],
     },
     triggers: [
-      triggers.scheduled({ schedule: '0 * * * *' }),
+      // GitHub snapshot sync twice an hour; Cloudflare may delay a run, so the age is shown from fetchedAt.
+      triggers.scheduled({ schedule: '7,37 * * * *' }),
       triggers.scheduled({ schedule: '0 12 * * *' }),
     ],
   },

@@ -3,7 +3,8 @@ import snapshots from '@devpulse/domain/fixtures/snapshots.sample.json';
 import { describe, expect, it, vi } from 'vitest';
 import worker from './index.ts';
 import { type Env, SNAPSHOT_KEY, syncSnapshots } from './sync.ts';
-import { configKv } from './test-config.ts';
+import { acquireSyncLock } from './sync-lock.ts';
+import { configKv, database } from './test-config.ts';
 
 function storage(initial: unknown = null) {
   let value = initial;
@@ -346,5 +347,68 @@ describe('snapshot schema compatibility', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+});
+
+describe('POST /api/sync', () => {
+  const token = 's'.repeat(32);
+  const request = (init: RequestInit = {}) =>
+    new Request('https://example.com/api/sync', init);
+  const bearer = { Authorization: `Bearer ${token}` };
+
+  it('rejects missing or wrong credentials before touching GitHub', async () => {
+    const upstream = vi.fn();
+    vi.stubGlobal('fetch', upstream);
+    const env = { REPORTS_TOKEN: token } as unknown as Env;
+    for (const headers of [
+      {},
+      { Authorization: 'Bearer wrong' },
+    ] as HeadersInit[])
+      expect(
+        (await worker.fetch(request({ method: 'POST', headers }), env)).status,
+      ).toBe(401);
+    expect(upstream).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it('allows only POST', async () => {
+    const env = { REPORTS_TOKEN: token } as unknown as Env;
+    const response = await worker.fetch(request({ headers: bearer }), env);
+    expect(response.status).toBe(405);
+    expect(response.headers.get('Allow')).toBe('POST');
+  });
+
+  it('runs a sync and reports the result, with 409 while another runs', async () => {
+    const { db } = database();
+    const kv = storage();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL | Request) =>
+        String(input).includes('?')
+          ? Response.json([])
+          : Response.json({ private: false, visibility: 'public' }),
+      ),
+    );
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const env = {
+      REPORTS_TOKEN: token,
+      SNAPSHOTS: kv,
+      CONFIG: configKv(),
+      REPORTS: db,
+    } as unknown as Env;
+    const ok = await worker.fetch(
+      request({ method: 'POST', headers: bearer }),
+      env,
+    );
+    expect(ok.status).toBe(200);
+    expect(await ok.json()).toMatchObject({ status: 'completed', failures: 0 });
+    await acquireSyncLock(db, Date.now());
+    const busy = await worker.fetch(
+      request({ method: 'POST', headers: bearer }),
+      env,
+    );
+    expect(busy.status).toBe(409);
+    log.mockRestore();
+    vi.unstubAllGlobals();
   });
 });

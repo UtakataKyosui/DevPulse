@@ -185,12 +185,15 @@ describe('publication access', () => {
     expect(upstream).not.toHaveBeenCalled();
   });
 
-  it('lets the daily trigger own the overlapping hourly refresh', async () => {
+  it('lets the daily trigger own the overlapping first refresh of the hour', async () => {
     const { env } = environment();
     const upstream = vi.fn();
     vi.stubGlobal('fetch', upstream);
     await worker.scheduled(
-      { cron: '0 * * * *', scheduledTime: Date.parse('2026-10-14T12:00:00Z') },
+      {
+        cron: '7,37 * * * *',
+        scheduledTime: Date.parse('2026-10-14T12:07:00Z'),
+      },
       env,
     );
     expect(upstream).not.toHaveBeenCalled();
@@ -207,18 +210,43 @@ describe('publication access', () => {
       ),
     );
     await worker.scheduled(
-      { cron: '0 * * * *', scheduledTime: Date.parse('2026-10-14T11:00:00Z') },
+      {
+        cron: '7,37 * * * *',
+        scheduledTime: Date.parse('2026-10-14T11:07:00Z'),
+      },
       env,
     );
     expect(mocks.AI.run).not.toHaveBeenCalled();
     await worker.scheduled(
-      { cron: '0 * * * *', scheduledTime: Date.parse('2026-10-14T13:00:00Z') },
+      {
+        cron: '7,37 * * * *',
+        scheduledTime: Date.parse('2026-10-14T13:07:00Z'),
+      },
       env,
     );
     expect(mocks.AI.run).toHaveBeenCalledOnce();
     expect(
       (await new ReportStore(env.REPORTS).get('2026-10-13'))?.publishedAt,
-    ).toBe('2026-10-14T13:00:00.000Z');
+    ).toBe('2026-10-14T13:07:00.000Z');
+  });
+
+  it('refreshes at the half hour but spends a report attempt only once per hour', async () => {
+    const { env, mocks } = environment();
+    const upstream = vi.fn(async (input: string) =>
+      input.includes('?')
+        ? Response.json([])
+        : Response.json({ private: false, visibility: 'public' }),
+    );
+    vi.stubGlobal('fetch', upstream);
+    await worker.scheduled(
+      {
+        cron: '7,37 * * * *',
+        scheduledTime: Date.parse('2026-10-14T12:37:00Z'),
+      },
+      env,
+    );
+    expect(upstream).toHaveBeenCalled();
+    expect(mocks.AI.run).not.toHaveBeenCalled();
   });
 
   it('requires a long configured token and exact bearer authentication', async () => {
