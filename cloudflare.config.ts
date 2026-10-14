@@ -15,8 +15,11 @@ export default defineConfig({
       REPORTS_TOKEN: bindings.secret(),
       GITHUB_TOKEN: bindings.secret(),
       ADMIN_ALLOWED_EMAILS: bindings.secret(),
-      // Fill in after creating the Access Application; empty keeps /admin closed (503).
-      ACCESS_SETTINGS: bindings.json({ teamDomain: '', aud: '' }),
+      // Empty values keep /admin closed (503).
+      ACCESS_SETTINGS: bindings.json({
+        teamDomain: 'utakata.cloudflareaccess.com',
+        aud: 'a94bf72f6eacf76cfc52a964f547dcd0ac2fee067f4492665d7648dcedc3c4cd',
+      }),
       // Owner whose public repositories can be added; never derived from the user.
       ADMIN_SETTINGS: bindings.json({ githubOwner: 'UtakataKyosui' }),
       REPORT_SETTINGS: bindings.json({
