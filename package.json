@@ -13,6 +13,7 @@
     "format": "biome format --write",
     "preview": "rspress preview",
     "config:seed": "node scripts/seed-config.ts",
+    "doctor": "node scripts/doctor.ts",
     "setup:secrets": "node scripts/setup-secrets.ts",
     "projects:fetch": "node scripts/projects.ts",
     "reports:fetch": "node scripts/reports.ts fetch",
