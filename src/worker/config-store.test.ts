@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import projectsJson from '../data/devpulse/projects.json';
+import projectsJson from '../data/devpulse/projects.sample.json';
 import {
   CONFIG_HISTORY_KEY,
   CONFIG_KEY,

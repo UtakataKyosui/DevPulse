@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import projectsJson from '../../data/devpulse/projects.json';
+import projectsJson from '../../data/devpulse/projects.sample.json';
 import { type AdminApiEnv, handleAdminApi } from '../admin-api.ts';
 import {
   CONFIG_HISTORY_KEY,
@@ -10,7 +10,12 @@ import { CLIENT_SCRIPT } from './client-script.ts';
 import { serveAdminPage } from './page.ts';
 
 const ORIGIN = 'http://localhost:8787';
-const projects = projectsJson.projects;
+// 管理 API は管理者のオーナー配下のリポジトリだけを新規追加できるため、fixture を寄せる。
+const OWNER = 'UtakataKyosui';
+const projects = projectsJson.projects.map((p) => ({
+  ...p,
+  repository: p.repository.replace(/^example\//, `${OWNER}/`),
+}));
 
 /** 管理画面スクリプトが使う範囲だけを持つ DOM の代用品。 */
 class FakeNode {
@@ -173,7 +178,7 @@ describe('admin UI rollback', () => {
     restoreButton(1).click();
     await vi.waitFor(() => expect(byId('restore-dialog').open).toBe(true));
     const diff = byId('restore-diff').textContent;
-    expect(diff).toContain('追加: LifeBoard');
+    expect(diff).toContain('追加: Sample Empty');
     expect(diff).toContain('変更: DevPulse / 公開: false -> true');
     expect(byId('restore-confirm').disabled).toBe(false);
 

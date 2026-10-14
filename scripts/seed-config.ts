@@ -11,7 +11,7 @@ const { values } = parseArgs({
   options: {
     remote: { type: 'boolean', default: false },
     'namespace-id': { type: 'string' },
-    source: { type: 'string', default: 'src/data/devpulse/projects.json' },
+    source: { type: 'string', default: 'scripts/projects.seed.json' },
   },
 });
 // cf dev のローカル KV は binding 名を namespace id として扱う。

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import projects from '../data/devpulse/projects.json';
-import snapshots from '../data/devpulse/snapshots.json';
+import projects from '../data/devpulse/projects.sample.json';
+import snapshots from '../data/devpulse/snapshots.sample.json';
 import worker from './index.ts';
 import { type Env, SNAPSHOT_KEY, syncSnapshots } from './sync.ts';
 import { configKv } from './test-config.ts';
@@ -35,7 +35,7 @@ describe('scheduled snapshot sync', () => {
         ]);
       return Response.json({
         private: false,
-        visibility: url.endsWith('/LifeBoard') ? 'private' : 'public',
+        visibility: url.endsWith('/private') ? 'private' : 'public',
       });
     });
     await syncSnapshots(
@@ -44,7 +44,9 @@ describe('scheduled snapshot sync', () => {
       new Date('2026-10-13T01:00:00Z'),
     );
     const data = kv.value() as typeof snapshots;
-    expect(data.snapshots).toHaveLength(projects.projects.length - 1);
+    expect(data.snapshots).toHaveLength(
+      projects.projects.filter((p) => p.published).length - 1,
+    );
     expect(data.snapshots[0]?.issueClosures).toHaveLength(100);
     expect(data.snapshots.every((s) => s.visibility === 'public')).toBe(true);
     expect(kv.put).toHaveBeenCalledWith(SNAPSHOT_KEY, expect.any(String));
@@ -124,7 +126,8 @@ describe('scheduled snapshot sync', () => {
     expect(data.snapshots.some((s) => s.repository.endsWith('/DevPulse'))).toBe(
       false,
     );
-    expect(data.snapshots).toHaveLength(snapshots.snapshots.length - 1);
+    // DevPulse is gone (404); the private fixture snapshot is not kept either.
+    expect(data.snapshots).toHaveLength(snapshots.snapshots.length - 2);
     expect(data.snapshots[0]?.fetchedAt).toBe(
       snapshots.snapshots[1]?.fetchedAt,
     );
