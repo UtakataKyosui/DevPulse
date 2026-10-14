@@ -310,6 +310,27 @@ describe('publication access', () => {
         )
       ).status,
     ).toBe(503);
+    for (const path of [
+      '/',
+      '/index.html',
+      '/reports/',
+      '/reports/index.html',
+    ]) {
+      mocks.ASSETS.fetch.mockResolvedValueOnce(Response.json(['2026-10-13']));
+      expect(
+        (await worker.fetch(new Request(`https://example.com${path}`), env))
+          .status,
+      ).toBe(503);
+      mocks.ASSETS.fetch
+        .mockResolvedValueOnce(Response.json([]))
+        .mockResolvedValueOnce(new Response('overview'));
+      const overview = await worker.fetch(
+        new Request(`https://example.com${path}`),
+        env,
+      );
+      expect(overview.status).toBe(200);
+      expect(overview.headers.get('Cache-Control')).toBe('no-store');
+    }
     mocks.ASSETS.fetch
       .mockResolvedValueOnce(Response.json([]))
       .mockResolvedValueOnce(new Response('<rss/>'));

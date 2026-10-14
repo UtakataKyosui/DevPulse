@@ -110,7 +110,14 @@ export default {
     const reportDate = /^\/reports\/(\d{4}-\d{2}-\d{2})(?:\/|\.html|$)/.exec(
       path,
     )?.[1];
-    if (reportDate || path === '/rss/reports.xml') {
+    const overview = [
+      '/',
+      '/index.html',
+      '/reports',
+      '/reports/',
+      '/reports/index.html',
+    ].includes(path);
+    if (reportDate || overview || path === '/rss/reports.xml') {
       const store = new ReportStore(env.REPORTS);
       await store.initialize();
       const repositories = await safeRepositories(env);
@@ -135,7 +142,7 @@ export default {
           .array(reportDateSchema)
           .max(30)
           .parse(await manifestResponse.json());
-        for (const date of dates) {
+        for (const date of overview ? dates.slice(0, 1) : dates) {
           const report = await store.get(date);
           if (!report || !canPublish(report, repositories))
             return new Response('Feed awaiting republication', {

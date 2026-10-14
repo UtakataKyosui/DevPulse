@@ -121,7 +121,12 @@ All production deploy workflows should share concurrency group
 
 Subscribe at **`/rss/reports.xml`** (RSS 2.0). Articles appear at
 `/reports/YYYY-MM-DD/`, with an archive at `/reports/`. The home page and
-archive advertise the feed through `link rel="alternate"`.
+archive show a visible RSS subscription button and advertise the feed through
+`link rel="alternate"`. The home page displays the latest AI summary; the
+archive displays that summary with project metrics and source links, so readers
+can follow progress without an RSS reader. The Worker checks the latest report's
+public visibility before serving these overview pages and temporarily returns
+503 if they await republication.
 
 ### Local checks and manual recovery
 

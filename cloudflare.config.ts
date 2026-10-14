@@ -18,7 +18,16 @@ export default defineConfig({
         maxInputChars: 24000,
       }),
     },
-    assets: { runWorkerFirst: ['/api/*', '/reports/*', '/rss/*'] },
+    assets: {
+      runWorkerFirst: [
+        '/',
+        '/index.html',
+        '/api/*',
+        '/reports',
+        '/reports/*',
+        '/rss/*',
+      ],
+    },
     triggers: [
       triggers.scheduled({ schedule: '0 * * * *' }),
       triggers.scheduled({ schedule: '0 12 * * *' }),

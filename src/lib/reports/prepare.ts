@@ -9,7 +9,7 @@ import path from 'node:path';
 import { z } from 'zod';
 import { renderReport, reportSchema } from './model.ts';
 
-export function prepareReports(root: string): string[] {
+export function loadReports(root: string): z.infer<typeof reportSchema>[] {
   const cache = path.join(root, '.reports-cache/reports.json');
   let reports: z.infer<typeof reportSchema>[] = [];
   try {
@@ -25,6 +25,14 @@ export function prepareReports(root: string): string[] {
   const dates = reports.map((report) => report.input.date);
   if (new Set(dates).size !== dates.length)
     throw new Error('Duplicate report dates');
+  return reports;
+}
+
+export function prepareReports(
+  root: string,
+  reports = loadReports(root),
+): string[] {
+  const dates = reports.map((report) => report.input.date);
   if (dates.length && !process.env.DEVPULSE_SITE_URL)
     throw new Error('DEVPULSE_SITE_URL is required for report publication');
   const directory = path.join(root, 'docs/reports');
