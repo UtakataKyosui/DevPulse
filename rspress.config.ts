@@ -11,9 +11,10 @@ import {
   snapshotFileSchema,
 } from './src/lib/devpulse/index.ts';
 import { buildProjectSidebar } from './src/lib/devpulse/project-sidebar.ts';
-import { prepareReports } from './src/lib/reports/prepare.ts';
+import { loadReports, prepareReports } from './src/lib/reports/prepare.ts';
 
-const reportDates = prepareReports(__dirname);
+const reports = loadReports(__dirname);
+const reportDates = prepareReports(__dirname, reports);
 const feedDates = new Set(reportDates.slice(0, 30));
 const siteUrl = process.env.DEVPULSE_SITE_URL ?? 'http://localhost:8080';
 const origin = new URL(siteUrl);
@@ -79,6 +80,7 @@ export default defineConfig({
       define: {
         __DEVPULSE_BUILD_TIME__: JSON.stringify(DEVPULSE_BUILD_TIME),
         __DEVPULSE_REPORT_DATES__: JSON.stringify(reportDates),
+        __DEVPULSE_LATEST_REPORT__: JSON.stringify(reports[0] ?? null),
         __DEVPULSE_API_URL__: JSON.stringify(
           process.env.DEVPULSE_API_URL ?? '/api',
         ),
