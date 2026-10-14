@@ -1,6 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import projectsJson from '../data/devpulse/projects.json';
+import projectsJson from '../data/devpulse/projects.sample.json';
 import { collectReportInput, type Report } from '../lib/reports/model.ts';
 import worker from './index.ts';
 import { ReportStore } from './report-store.ts';
@@ -152,7 +152,9 @@ describe('D1 daily generation', () => {
 
   it('builds a new report only from repositories published in KV at generation time', async () => {
     const { env, mocks } = environment();
-    const [hidden, ...others] = projectsJson.projects;
+    const [hidden, ...others] = projectsJson.projects.filter(
+      (p) => p.published,
+    );
     mocks.CONFIG.set([{ ...hidden, published: false }, ...others]);
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.stubGlobal(

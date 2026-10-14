@@ -109,14 +109,18 @@ It is a separate namespace from `SNAPSHOTS` because the hourly sync overwrites
 `SNAPSHOTS` wholesale, while `CONFIG` holds hand-edited data that needs its own
 lifecycle (backup, access scoping, listing). `src/worker/config-store.ts` reads
 and writes it. A missing or invalid value is an error; there is no fallback to
-`projects.json`. Writes validate with `projectConfigSchema` (duplicate id, slug
+a repository file. Writes validate with `projectConfigSchema` (duplicate id, slug
 and repository are rejected) and are refused when the revision re-read just
 before the write differs from the caller's expected revision. KV has no
 compare-and-swap, so two writes racing between that re-read and the put are not
 detected; this relies on a single administrator.
 
-Seed `projects.json` once, with revision 1 (it refuses to overwrite an existing
-value):
+Seed the initial 8 projects once, with revision 1 (it refuses to overwrite an
+existing value). The input is `scripts/projects.seed.json`, a snapshot of the
+production list taken when the file-based config was retired; it is only read by
+the seed script, while tests and fixture builds use
+`src/data/devpulse/projects.sample.json`. Pass `--source <file>` to seed
+something else.
 
 ```bash
 pnpm run config:seed                                            # local cf dev KV
@@ -163,7 +167,7 @@ so up to about one hour plus the KV delay and build time.
 ### Build-time sidebar and detail pages
 
 `pnpm run projects:fetch` reads `GET /api/projects` from `DEVPULSE_SITE_URL`
-(public, no token) into `.projects-cache/projects.json`. `rspress.config.ts`
+(public, no token) into `.projects-cache/config.json`. `rspress.config.ts`
 then writes `docs/projects/_meta.json`, generates
 `docs/projects/<slug>/index.mdx` from a template for published slugs without a
 hand-written MDX (generated files carry a marker and are git-ignored), and
@@ -179,6 +183,35 @@ DEVPULSE_PROJECTS_FIXTURE=src/data/devpulse/projects.sample.json pnpm run build
 deploy. `deploy:bootstrap` and `deploy:check` need the fetch or the fixture
 variable as well. `docs/projects/_meta.json` is rewritten on every build; do
 not commit the fixture's version.
+
+### Adding a project
+
+1. Open `/admin` (behind Cloudflare Access), pick the repository from the
+   candidates list, set its name, `tier` and `published`, and save.
+2. The API and Home reflect it after the KV delay below. The sidebar and
+   `/projects/<slug>/` page appear on the next hourly build (`15 * * * *`), or
+   run the **Publish daily reports** workflow manually. A detail page is
+   generated automatically; add `docs/projects/<slug>/index.mdx` only to
+   hand-write one.
+
+### Production migration
+
+Do these in order (not performed by the code change; each needs production access):
+
+1. Deploy the Worker that reads `CONFIG` (`cf deploy` provisions the
+   namespace) and note the namespace id in the dashboard.
+2. Seed: `pnpm run config:seed -- --remote --namespace-id <id>`.
+3. Confirm `GET /api/projects` returns the 8 projects, then run the
+   **Publish daily reports** workflow so the build fetches them.
+4. Check that Home, the sidebar and the detail pages look the same as before,
+   and that a change on `/admin` shows up in the API and Home immediately and in
+   the sidebar and detail pages after the next build.
+
+### Local admin with `cf dev`
+
+`cf dev` does not pick up `ADMIN_AUTH_BYPASS` from `.dev.vars`. Run the Worker
+with `pnpm exec wrangler dev --var ADMIN_AUTH_BYPASS:1` (after
+`pnpm run config:seed`) and open `http://localhost:8787/admin`.
 
 ## Admin API
 
@@ -298,13 +331,13 @@ in the feed; readers follow the link to read the summary, metrics and sources.
 
 ### Repository priority
 
-Set `priority` on each project in `src/data/devpulse/projects.json`, for example
-`"priority": "highest"`. The dashboard displays projects in this order:
-`highest` (最優先), `next` (次に着手), `later` (後回し), `unset` (未設定).
-Omitting the field is equivalent to `unset`; ties keep the configuration file's
-order. Invalid values fail configuration validation. Rebuild and deploy after
-editing the file to publish the same order for all viewers. Priority is displayed
-as a badge; it is configured only in the file.
+Projects are grouped and ordered by `tier` (`high` / `medium` / `low`) and by
+their order in the config; both are edited on `/admin`. The dashboard then sorts
+cards by `priority` (`highest` (最優先), `next` (次に着手), `later` (後回し),
+`unset` (未設定)); ties keep the config order. Each viewer sets this per
+project in the dashboard, stored in that browser's `localStorage` only. The
+optional `priority` field of a project in the CONFIG KV is just the default
+shown before a viewer chooses one; the admin page does not edit it.
 
 ### Local checks and manual recovery
 

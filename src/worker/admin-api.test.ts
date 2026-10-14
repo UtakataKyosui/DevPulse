@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import projectsJson from '../data/devpulse/projects.json';
+import projectsJson from '../data/devpulse/projects.sample.json';
 import { type AdminApiEnv, handleAdminApi } from './admin-api.ts';
 import {
   CONFIG_HISTORY_KEY,
@@ -11,7 +11,11 @@ import worker from './index.ts';
 
 const ORIGIN = 'http://localhost:8787';
 const OWNER = 'UtakataKyosui';
-const projects = projectsJson.projects;
+// 管理 API は管理者のオーナー配下のリポジトリだけを新規追加できるため、fixture を寄せる。
+const projects = projectsJson.projects.map((p) => ({
+  ...p,
+  repository: p.repository.replace(/^example\//, `${OWNER}/`),
+}));
 
 function kv() {
   const values = new Map<string, string>();
