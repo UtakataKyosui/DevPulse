@@ -14,7 +14,7 @@ Accessで保護する本番ドメインを用意し、`DEVPULSE_SITE_URL`には�
 | 1 | GitHub変数 | `DEVPULSE_SITE_URL` | デプロイ先のオリジン。パスなし（[本番設定](reports.md#本番環境の設定)） | ビルドとレポート取得が失敗し、デプロイされない |
 | 2 | GitHubシークレット | `CLOUDFLARE_API_TOKEN` | Workers、KV、D1、Workers AIに必要な権限だけを持つAPIトークン。**`reports.yml`で必須** | デプロイのステップが失敗する |
 | 3 | GitHubシークレット | `CLOUDFLARE_ACCOUNT_ID` | CloudflareアカウントID | デプロイのステップが失敗する |
-| 4 | GitHubとWorkerのシークレット | `REPORTS_TOKEN` | 両方に同じ32文字以上のランダムな文字列 | レポートAPIがリクエストを拒否し、`reports:fetch`が失敗する |
+| 4 | GitHubとWorkerのシークレット | `REPORTS_TOKEN` | 両方に同じ32文字以上のランダムな文字列。`pnpm run setup:secrets`で生成して両方に登録できる（Workerを作成した後に実行する） | レポートAPIがリクエストを拒否し、`reports:fetch`が失敗する |
 | 5 | Workerシークレット | `GITHUB_TOKEN` | 公開リポジトリの読み取り専用fine-grained PAT（[GitHubトークン](synchronization.md#githubトークン)） | 毎時同期が未認証のGitHubリクエストにフォールバックし、レート制限に達しやすくなる |
 | 6 | Cloudflare Zero Trust | Access Application | `/admin*`と`/api/admin/*`を保護するセルフホスト型アプリ（[Access設定](authentication.md#accessの設定)） | Accessがログインを要求せず、Workerの検証だけが防御になる |
 | 7 | Workerシークレット | `ACCESS_TEAM_DOMAIN` | `<team>.cloudflareaccess.com` | `/admin`と`/api/admin/*`が503を返す |
