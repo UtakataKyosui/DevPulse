@@ -253,6 +253,38 @@ describe('表示モデル', () => {
 });
 
 describe('ProjectDashboard 描画', () => {
+  it('設定ファイルの優先度順に表示し、同順位と未設定の順序を保つ', () => {
+    const input = views(
+      ...['a', 'b', 'c', 'd', 'e', 'f'].map((slug) => make({ slug })),
+    );
+    input[1].definition.priority = 'next';
+    input[2].definition.priority = 'highest';
+    input[3].definition.priority = 'next';
+    input[4].definition.priority = 'later';
+    input[5].definition.priority = 'unset';
+    expect(buildDashboardModel(input).cards.map((card) => card.id)).toEqual([
+      'c',
+      'b',
+      'd',
+      'e',
+      'a',
+      'f',
+    ]);
+    expect(input.map((view) => view.definition.id)).toEqual([
+      'a',
+      'b',
+      'c',
+      'd',
+      'e',
+      'f',
+    ]);
+    const html = renderToString(<ProjectDashboard views={input} />);
+    expect(html.indexOf('href="/projects/c/"')).toBeLessThan(
+      html.indexOf('href="/projects/b/"'),
+    );
+    expect(html).toContain('最優先');
+    expect(html).not.toContain('<select');
+  });
   it('テキスト・リンク・aria-label・stale警告を出力する', () => {
     const html = renderToString(
       <ProjectDashboard
