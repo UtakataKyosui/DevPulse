@@ -41,19 +41,10 @@ describe('admin page serving', () => {
     expect(html).toContain('id="root"');
   });
 
-  it('allows Radix styles only through a per-response nonce', async () => {
-    const [one, two] = await Promise.all([get('/admin'), get('/admin')]);
-    const nonce = (r: Response) =>
-      /style-src 'self' 'nonce-([^']+)'/.exec(
-        r.headers.get('Content-Security-Policy') ?? '',
-      )?.[1];
-    const html = await one.text();
-    expect(nonce(one)).toBeTruthy();
-    expect(html).toContain(`name="csp-nonce" content="${nonce(one)}"`);
-    expect(nonce(one)).not.toBe(nonce(two));
-    expect(one.headers.get('Content-Security-Policy')).not.toContain(
-      'unsafe-inline',
-    );
+  it('keeps style-src strict without inline allowances', async () => {
+    const csp = (await get('/admin')).headers.get('Content-Security-Policy');
+    expect(csp).toContain("style-src 'self';");
+    expect(csp).not.toMatch(/unsafe-inline|nonce-/);
   });
 
   it.each([...PAGES, ...ASSETS])(

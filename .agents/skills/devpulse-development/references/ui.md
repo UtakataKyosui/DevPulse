@@ -25,8 +25,9 @@ pnpm dlx shadcn@latest add card
 - `pnpm run admin:build`（`scripts/build-admin.ts`）がesbuildとTailwind CLIでJSとCSSを生成し、
   git管理外の`src/worker/admin/generated.ts`に文字列として書き出します。`test`と`build`が先に実行します。
 - Workerは認可後にだけ`/admin/app.js`と`/admin/app.css`を配信します。公開ビルドには含めません。
-- CSPは`style-src 'self' 'nonce-…'`です。nonceはレスポンスごとに変わり、Radix（`react-remove-scroll`）が
-  ダイアログ表示中に挿入する`<style>`に`src/admin/nonce.ts`経由で付きます。`'unsafe-inline'`は使いません。
+- CSPは`style-src 'self'`のままです。ダイアログなどのプリミティブにはBase UI（`@base-ui/react`）を使います。
+  Base UIは`<style>`を挿入せず、スクロール固定もCSSOMで行うため、`'unsafe-inline'`やnonceは不要です。
+  `<style>`を挿入するライブラリ（Radixの`react-remove-scroll`など）を足すとCSPで止まります。
 - 選択肢が多いフォームのセレクトは、CSPとテストのしやすさから`native-select`を使います。
 - 公開サイトのナビゲーションにある「管理画面」リンクは、`theme/index.tsx`の`afterNavMenu`にある通常の`<a href="/admin">`です。
   クライアントルーターを通さずWorkerに到達させるためで、ログインはCloudflare Accessが要求します。

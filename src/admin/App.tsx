@@ -333,11 +333,9 @@ export function App() {
                 : ''}
             </p>
           </div>
-          <Button asChild variant="outline" size="sm">
-            <a href="/">
-              <ArrowLeft />
-              サイトへ戻る
-            </a>
+          <Button variant="outline" size="sm" render={<a href="/" />}>
+            <ArrowLeft />
+            サイトへ戻る
           </Button>
         </div>
       </header>

@@ -25,11 +25,9 @@ export function Layout(props: LayoutProps) {
 // 認証は Cloudflare Access が行う。
 function AdminLink() {
   return (
-    <Button asChild variant="outline" size="sm">
-      <a href="/admin">
-        <Settings />
-        管理画面
-      </a>
+    <Button variant="outline" size="sm" render={<a href="/admin" />}>
+      <Settings />
+      管理画面
     </Button>
   );
 }

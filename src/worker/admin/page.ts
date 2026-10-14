@@ -1,12 +1,11 @@
 import { ADMIN_CSS, ADMIN_JS } from './generated.ts';
 
-const html = (nonce: string) => `<!doctype html>
+const HTML = `<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="csp-nonce" content="${nonce}">
 <title>DevPulse 管理</title>
 <link rel="stylesheet" href="/admin/app.css">
 </head>
@@ -20,21 +19,13 @@ const html = (nonce: string) => `<!doctype html>
 
 const NO_STORE = 'no-store';
 
-function newNonce(): string {
-  return btoa(
-    String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))),
-  );
-}
-
 /**
  * 管理画面の静的ファイル。呼び出し側(index.ts)が adminGate を通した後にだけ呼ぶ。
  * 画面と JS は Worker のバンドルにのみ存在し、assets(公開ビルド)には含めない。
- * style-src の nonce は Radix が実行時に挿入する <style> のためで、レスポンスごとに変える。
  */
 export function serveAdminPage(request: Request): Response {
   const path = new URL(request.url).pathname.toLowerCase();
-  const nonce = newNonce();
-  const page = { body: html(nonce), type: 'text/html' };
+  const page = { body: HTML, type: 'text/html' };
   const files: Record<string, { body: string; type: string }> = {
     '/admin': page,
     '/admin/': page,
@@ -60,7 +51,8 @@ export function serveAdminPage(request: Request): Response {
       'X-Content-Type-Options': 'nosniff',
       'Referrer-Policy': 'no-referrer',
       'X-Frame-Options': 'DENY',
-      'Content-Security-Policy': `default-src 'none'; script-src 'self'; style-src 'self' 'nonce-${nonce}'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`,
+      'Content-Security-Policy':
+        "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
     },
   });
 }

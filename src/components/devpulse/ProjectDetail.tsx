@@ -76,16 +76,14 @@ export function ProjectOverview() {
       <dt>Repository</dt>
       <dd>
         <Badge
-          asChild
+          render={<a href={repositoryUrl} />}
           variant="outline"
           className="max-w-full gap-2 px-3 py-1 text-sm whitespace-normal"
         >
-          <a href={repositoryUrl}>
-            <GitHubIcon />
-            <span className="min-w-0 break-all">
-              {repositoryUrl.replace('https://', '')}
-            </span>
-          </a>
+          <GitHubIcon />
+          <span className="min-w-0 break-all">
+            {repositoryUrl.replace('https://', '')}
+          </span>
         </Badge>
       </dd>
     </dl>
@@ -308,11 +306,13 @@ export function NextActions() {
       {nextActions.href && (
         <>
           {' '}
-          <Button asChild variant="outline" size="sm">
-            <a href={nextActions.href}>
-              GitHub で開く
-              <GitHubIcon />
-            </a>
+          <Button
+            variant="outline"
+            size="sm"
+            render={<a href={nextActions.href} />}
+          >
+            GitHub で開く
+            <GitHubIcon />
           </Button>
         </>
       )}
