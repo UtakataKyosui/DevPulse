@@ -19,7 +19,9 @@ const ITEMS: {
 export function ProjectSummary({ summary }: { summary: SummaryModel }) {
   return (
     <ul className="devpulse-summary" aria-label="プロジェクト状態の集計">
-      {ITEMS.map((item) => (
+      {ITEMS.filter(
+        (item) => item.key === 'total' || summary[item.key] > 0,
+      ).map((item) => (
         <li key={item.key}>
           <Card
             className={`devpulse-summary__item devpulse-tone--${item.tone}`}

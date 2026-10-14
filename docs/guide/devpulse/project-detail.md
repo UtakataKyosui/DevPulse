@@ -6,7 +6,7 @@
 
 1. `src/data/devpulse/projects.sample.json` にプロジェクトを定義する
 2. `docs/projects/<slug>/index.mdx` を `docs/projects/devpulse/index.mdx` から複製し、`<ProjectDetail slug="...">` の `slug` と概要を書き換える
-3. `docs/projects/_meta.json` に `{ "type": "dir", "name": "<slug>" }` と、`docs/projects/<slug>/_meta.json`(`["index"]`)を追加する
+3. `docs/projects/_meta.json` に `{ "type": "dir", "name": "<slug>" }` を追加する。プロジェクト内の `_meta.json` は不要です。`index.mdx` だけなら単独リンクになり、関連する Markdown/MDX ファイルを追加すると自動でフォルダ表示になります。並び順を指定するために `_meta.json` を置く場合は、`index` を含めず関連ページだけを列挙します。
 
 公開対象の slug に MDX ページがあることはテスト(`detail.test.tsx`)で検証します。
 
