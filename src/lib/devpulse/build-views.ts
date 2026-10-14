@@ -4,6 +4,7 @@ import { assessHealth } from './health.ts';
 import { calcProgressPercent } from './progress.ts';
 import { repositoryKey } from './repository-key.ts';
 import { selectFeaturedMilestone } from './select-milestone.ts';
+import { sortProjectsByTier } from './sort-projects.ts';
 import { calcIssueThroughput } from './throughput.ts';
 import type {
   GitHubProjectSnapshot,
@@ -64,7 +65,8 @@ export function buildProjectViews(
       ),
     });
   }
-  return views;
+  // Home・日次レポートの並びを Tier 順に揃える
+  return sortProjectsByTier(views, (view) => view.definition.tier);
 }
 
 /**

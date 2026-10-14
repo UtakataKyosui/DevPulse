@@ -7,7 +7,8 @@
       "description": "全然開発が進まないのを人に監視してもらうことにしました...",
       "repository": "UtakataKyosui/DevPulse",
       "published": true,
-      "lifecycle": "active"
+      "lifecycle": "active",
+      "tier": "medium"
     },
     {
       "id": "lifeboard",
@@ -16,7 +17,8 @@
       "description": "生活タスクと生活習慣の管理のためのアプリケーション with AI",
       "repository": "UtakataKyosui/LifeBoard",
       "published": true,
-      "lifecycle": "active"
+      "lifecycle": "active",
+      "tier": "medium"
     },
     {
       "id": "astro-portfolio-with-blog",
@@ -26,6 +28,7 @@
       "repository": "UtakataKyosui/astro-portfolio-with-blog",
       "published": true,
       "lifecycle": "active",
+      "tier": "medium",
       "featuredMilestoneNumber": 1
     },
     {
@@ -36,6 +39,7 @@
       "repository": "UtakataKyosui/gh-extension-template",
       "published": true,
       "lifecycle": "active",
+      "tier": "medium",
       "featuredMilestoneNumber": 1
     },
     {
@@ -46,6 +50,7 @@
       "repository": "UtakataKyosui/axvern",
       "published": true,
       "lifecycle": "active",
+      "tier": "medium",
       "featuredMilestoneNumber": 1
     },
     {
@@ -55,7 +60,8 @@
       "description": "その日の振り返りを行うためのシステム",
       "repository": "UtakataKyosui/daily-reflection-system",
       "published": true,
-      "lifecycle": "active"
+      "lifecycle": "active",
+      "tier": "medium"
     },
     {
       "id": "repositories-manage",
@@ -64,7 +70,8 @@
       "description": "リポジトリ管理用システムの作成（重複だのの回避のため）",
       "repository": "UtakataKyosui/repositories-manage",
       "published": true,
-      "lifecycle": "active"
+      "lifecycle": "active",
+      "tier": "medium"
     },
     {
       "id": "gh-scaffold",
@@ -74,6 +81,7 @@
       "repository": "UtakataKyosui/gh-scaffold",
       "published": true,
       "lifecycle": "active",
+      "tier": "medium",
       "featuredMilestoneNumber": 1
     }
   ]

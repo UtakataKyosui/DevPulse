@@ -37,5 +37,6 @@ export {
   snapshotFileSchema,
 } from './schema.ts';
 export { selectFeaturedMilestone } from './select-milestone.ts';
+export { sortProjectsByTier } from './sort-projects.ts';
 export { calcIssueThroughput, THROUGHPUT_WINDOW_DAYS } from './throughput.ts';
 export * from './types.ts';
