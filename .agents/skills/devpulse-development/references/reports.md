@@ -30,7 +30,7 @@ D1のレポートと取得データには自動有効期限を設けていませ
 
 1. GitHubリポジトリ変数`DEVPULSE_SITE_URL`に、デプロイ済みサイトのオリジン（例：`https://<your-worker>.<your-subdomain>.workers.dev`）をパスなしで設定します。RSSリンクとGUIDはこの絶対オリジンを使うため、変更しないようにしてください。
 2. 32文字以上のランダムなトークンを生成し、Workerシークレット`REPORTS_TOKEN`とGitHub Actionsシークレット`REPORTS_TOKEN`に同じ値を設定します。`pnpm run setup:secrets`は生成した値を標準入力で`wrangler secret put`と`gh secret set`に渡すため、値がシェル引数やログに残りません。事前にWranglerの認証（`pnpm exec wrangler login`または`CLOUDFLARE_API_TOKEN`）と`gh auth login`を済ませ、`--dry-run`で実行内容を確認できます。再実行すると新しい値で両方を置き換えるため、トークンの更新にも使えます。APIは未設定または短いトークンを拒否します。
-3. GitHub Actionsシークレット`CLOUDFLARE_API_TOKEN`と`CLOUDFLARE_ACCOUNT_ID`を追加します。トークンには対象アカウントのWorkersデプロイ、KV・D1の作成、Workers AIに必要な権限だけを付与してください。トークン、`.dev.vars`、`.env`ファイルはコミットしないでください。
+3. GitHub Actionsシークレット`CLOUDFLARE_API_TOKEN`と`CLOUDFLARE_ACCOUNT_ID`を追加します。トークンには対象アカウントのWorkersデプロイ、KV・D1の作成、Workers AIに必要な権限だけを付与してください（権限名は[必要な権限](setup-checklist.md#必要な権限)）。トークン、`.dev.vars`、`.env`ファイルはコミットしないでください。
 4. 初回は`DEVPULSE_SITE_URL`を設定して`pnpm run deploy:bootstrap`を実行します。AIとD1のバインディング、および2つのCron Triggerを設定します。必要ならシークレットを追加する前に一度デプロイしてWorkerを作成してください。
 5. リポジトリのデフォルトブランチで`.github/workflows/reports.yml`を有効にします。最初のレポート生成後に**Publish daily reports**を手動実行してください。
 
