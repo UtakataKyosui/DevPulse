@@ -11,7 +11,7 @@ import {
   snapshotFileSchema,
 } from './src/lib/devpulse/index.ts';
 import { buildProjectSidebar } from './src/lib/devpulse/project-sidebar.ts';
-import { renderFeedContent } from './src/lib/reports/feed.ts';
+import { feedExcerpt } from './src/lib/reports/feed.ts';
 import { loadReports, prepareReports } from './src/lib/reports/prepare.ts';
 
 const reports = loadReports(__dirname);
@@ -68,7 +68,12 @@ export default defineConfig({
           )?.[1];
           const report = date ? reportsByDate.get(date) : undefined;
           if (!report) throw new Error('Missing saved report for RSS item');
-          return { ...item, id: item.link, content: renderFeedContent(report) };
+          return {
+            ...item,
+            id: item.link,
+            description: feedExcerpt(report.summary),
+            content: '',
+          };
         },
         test: (page) => {
           const date = /^\/reports\/(\d{4}-\d{2}-\d{2})\//.exec(
