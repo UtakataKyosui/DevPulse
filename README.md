@@ -142,6 +142,26 @@ Cron, `/api/*`) see a change after the KV delay above; the sidebar and detail
 pages also wait for the next hourly build (`15 * * * *`) to fetch the config,
 so up to about one hour plus the KV delay and build time.
 
+### Build-time sidebar and detail pages
+
+`pnpm run projects:fetch` reads `GET /api/projects` from `DEVPULSE_SITE_URL`
+(public, no token) into `.projects-cache/projects.json`. `rspress.config.ts`
+then writes `docs/projects/_meta.json`, generates
+`docs/projects/<slug>/index.mdx` from a template for published slugs without a
+hand-written MDX (generated files carry a marker and are git-ignored), and
+excludes the hand-written MDX of unpublished or removed slugs. Without a
+fetched config the build exits non-zero; it never falls back to a fixture. To
+use one locally or in a PR check, set it explicitly:
+
+```sh
+DEVPULSE_PROJECTS_FIXTURE=src/data/devpulse/projects.sample.json pnpm run build
+```
+
+`reports.yml` runs the fetch before the build, so a failed fetch stops the
+deploy. `deploy:bootstrap` and `deploy:check` need the fetch or the fixture
+variable as well. `docs/projects/_meta.json` is rewritten on every build; do
+not commit the fixture's version.
+
 ## Progress synchronization
 
 The `published` projects in the KV config (`config:projects:v1`) define the repositories. The Worker
