@@ -1,3 +1,4 @@
+import { PRIORITY_LABELS } from '../../lib/devpulse/types.ts';
 import { Badge } from '../ui/badge.tsx';
 import { Card, CardContent, CardHeader } from '../ui/card.tsx';
 import { MilestoneGauge } from './MilestoneGauge.tsx';
@@ -19,6 +20,9 @@ export function ProjectCard({ card }: { card: CardModel }) {
         </CardHeader>
         <CardContent className="px-0">
           <div className="devpulse-card__badges">
+            <Badge variant="outline">
+              着手優先度: {PRIORITY_LABELS[card.priority]}
+            </Badge>
             <Badge variant="secondary">Lifecycle: {card.lifecycleLabel}</Badge>
             <Badge className={`devpulse-tone--${health.tone}`}>
               <span aria-hidden="true">{health.icon} </span>

@@ -9,6 +9,7 @@ import {
   selectFeaturedMilestone,
   toJstDate,
 } from '../../lib/devpulse/index.ts';
+import type { Priority } from '../../lib/devpulse/types.ts';
 
 /**
  * 表示トーン。stable/warning/stalled/unknown は active の Activity Health、
@@ -47,6 +48,7 @@ export interface ProgressModel {
 
 export interface CardModel {
   id: string;
+  priority: Priority;
   name: string;
   description: string;
   href: string;
@@ -184,6 +186,7 @@ export function toCardModel(view: ProjectView): CardModel {
 
   return {
     id: definition.id,
+    priority: definition.priority ?? 'unset',
     name: definition.name,
     description: definition.description,
     href: `/projects/${definition.slug}/`,
@@ -255,9 +258,17 @@ export function summarizeSync(views: ProjectView[]): SyncModel {
 }
 
 export function buildDashboardModel(views: ProjectView[]): DashboardModel {
+  const rank: Record<Priority, number> = {
+    highest: 0,
+    next: 1,
+    later: 2,
+    unset: 3,
+  };
   return {
     summary: summarize(views),
-    cards: views.map(toCardModel),
+    cards: views
+      .map(toCardModel)
+      .sort((a, b) => rank[a.priority] - rank[b.priority]),
     sync: summarizeSync(views),
   };
 }

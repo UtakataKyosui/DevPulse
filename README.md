@@ -131,6 +131,16 @@ RSS items contain a title, publication date, short plain-text summary (up to
 180 characters) and a link to the report page. Full report HTML is not embedded
 in the feed; readers follow the link to read the summary, metrics and sources.
 
+### Repository priority
+
+Set `priority` on each project in `src/data/devpulse/projects.json`, for example
+`"priority": "highest"`. The dashboard displays projects in this order:
+`highest` (最優先), `next` (次に着手), `later` (後回し), `unset` (未設定).
+Omitting the field is equivalent to `unset`; ties keep the configuration file's
+order. Invalid values fail configuration validation. Rebuild and deploy after
+editing the file to publish the same order for all viewers. Priority is displayed
+as a badge; it is configured only in the file.
+
 ### Local checks and manual recovery
 
 Use an ignored `.dev.vars` file for the local Worker token. To call a deployed

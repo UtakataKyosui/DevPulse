@@ -62,6 +62,27 @@ describe('sample data', () => {
       }).success,
     ).toBe(false);
   });
+
+  it('accepts file priorities and rejects unsupported values', () => {
+    const base = config.projects[0];
+    for (const priority of ['highest', 'next', 'later', 'unset']) {
+      expect(
+        projectConfigSchema.parse({
+          projects: [{ ...base, priority }],
+        }).projects[0].priority,
+      ).toBe(priority);
+    }
+    for (const priority of ['high', 1, null]) {
+      expect(
+        projectConfigSchema.safeParse({
+          projects: [{ ...base, priority }],
+        }).success,
+      ).toBe(false);
+    }
+    expect(
+      projectConfigSchema.parse({ projects: [base] }).projects[0].priority,
+    ).toBeUndefined();
+  });
 });
 
 describe('calcProgressPercent', () => {
