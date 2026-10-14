@@ -118,7 +118,55 @@ Wranglerのスコープ不足の警告が出た場合は`pnpm exec wrangler logi
 6. `workers.dev`とPreview URLsを無効化する。この操作に対応する`cf`コマンドは見つかっていないため、
    [設定手順](../devpulse-development/references/authentication.md#workersdevとプレビューurlの無効化)に従い、ダッシュボードで行う。
 
-## 4. 検証
+## 4. 初回デプロイ（本番に`/api/projects`が無いとき）
+
+`reports.yml`は先に`projects:fetch`で本番の`/api/projects`を読むため、本番がこのAPIを持たないと
+`Projects API returned HTTP 404`で落ちる。この場合は手元から、フィクスチャを指定して一度だけデプロイする
+（[本番環境の移行](../devpulse-development/references/projects.md#本番環境の移行)）。
+
+1. 本番に保存済みレポートがあるか確認する。あるのにデプロイ前に取得しないと、公開済みのレポートが消える
+   （[ローカルでの確認と手動復旧](../devpulse-development/references/report-operations.md#ローカルでの確認と手動復旧)）。
+
+   ```bash
+   cf d1 list                                    # devpulse-reports のIDを控える
+   cf d1 query <database-id> --sql "SELECT date, published_at FROM daily_reports ORDER BY date DESC LIMIT 5"
+   ```
+
+2. レポートがある場合は取得する。`REPORTS_TOKEN`はWorkerとGitHubに保存済みの秘密で値を読み出せないため、
+   新しい値を作って両方に登録し、同じ値で取得する。Claude Codeの自動モードは秘密の書き込みを拒否するため、
+   **ユーザーの端末で実行してもらう**。値は標準入力と環境変数でだけ渡し、表示しない。
+
+   ```bash
+   export DEVPULSE_SITE_URL=<production-origin>
+   TOKEN=$(node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('base64url'))")
+   printf '%s' "$TOKEN" | pnpm exec wrangler secret put REPORTS_TOKEN --name devpulse
+   printf '%s' "$TOKEN" | gh secret set REPORTS_TOKEN
+   REPORTS_TOKEN="$TOKEN" pnpm run reports:fetch
+   unset TOKEN
+   ```
+
+   `.reports-cache/reports.json`ができたことを確認する。
+
+3. フィクスチャを指定してビルドし、`--dry-run`で確認する。`docs/projects/_meta.json`はビルドで書き換わるため、コミットしない。
+
+   ```bash
+   DEVPULSE_PROJECTS_FIXTURE=src/data/devpulse/projects.sample.json DEVPULSE_SITE_URL=<production-origin> pnpm run build
+   cf deploy --dry-run
+   ```
+
+4. `cloudflare.config.ts`で`bindings.secret()`と宣言したシークレット（`REPORTS_TOKEN`、`GITHUB_TOKEN`、`ADMIN_ALLOWED_EMAILS`）が
+   Workerに未登録だと、`cf deploy`は「required secrets have not been set」で失敗する。`pnpm run doctor`で先に確認する。
+   `GITHUB_TOKEN`はfine-grained PATで、値は標準入力で`wrangler secret put GITHUB_TOKEN --name devpulse`に渡す。
+   承認を得てから`cf deploy`を実行する。`CONFIG`のKV名前空間が作られる（シークレット不足で失敗しても、名前空間は作成済みになる）。
+5. `cf kv namespaces list`で`CONFIG`のIDを確認し、初期データを投入する。
+
+   ```bash
+   pnpm run config:seed --remote --namespace-id <id>
+   ```
+
+6. `GET /api/projects`が返ることを確認し、`reports.yml`を手動実行する。
+
+## 5. 検証
 
 1. `pnpm run doctor`で必須項目に`MISSING`がないことを確認する。
 2. [未認証アクセスの確認](../devpulse-development/references/authentication.md#未認証アクセスが拒否されることの確認)を実行する。
