@@ -59,7 +59,21 @@ APIの権限名は、ダッシュボードの`Edit`が`Write`になる。
 ダッシュボードで作成する場合は、My Profile > API Tokensで上記4つの権限を付けたトークンを作成する。
 値は一度しか表示されないため、画面から直接`gh secret set CLOUDFLARE_API_TOKEN`の入力プロンプトに貼り付け、シェルの引数や履歴に残さない。
 
-## 2. Access（管理画面の保護）
+## 2. 許可するメールアドレス（`ADMIN_ALLOWED_EMAILS`）
+
+Workerのシークレットに登録する。GitHubのシークレットはデプロイ時にしか見えず、Workerから参照できない。
+値は標準入力で渡す。複数人を許可する場合はカンマ区切りの1つの文字列にする。
+Accessのポリシーとは別の許可リストで、両方を通らないと`/admin`に入れないため、同じメールアドレスにする。
+
+```bash
+printf '%s' '<owner-email>' | pnpm exec wrangler secret put ADMIN_ALLOWED_EMAILS --name devpulse
+```
+
+登録後に`pnpm run doctor`で`ADMIN_ALLOWED_EMAILS`が`OK`になることを確認する。
+Wranglerのスコープ不足の警告が出た場合は`pnpm exec wrangler login`をやり直す。
+登録だけでは`/admin`は開かず、手順3で`ACCESS_SETTINGS`を埋めてデプロイするまで503を返す。
+
+## 3. Access（管理画面の保護）
 
 前提：保護する本番ホスト名が、このアカウントのゾーン上にあること。
 `DEVPULSE_SITE_URL`が`*.workers.dev`の場合、`workers.dev`はアカウントのゾーンではないため、
@@ -96,16 +110,10 @@ APIの権限名は、ダッシュボードの`Edit`が`Write`になる。
 5. `cloudflare.config.ts`の`ACCESS_SETTINGS`に、チームドメインを`teamDomain`、AUDを`aud`として記載する。
    コミットしてデプロイする（`reports.yml`を実行する）。
 
-6. 許可するメールアドレスをWorkerシークレットに登録する。値は標準入力で渡す。
-
-   ```bash
-   printf '%s' '<owner-email>' | pnpm exec wrangler secret put ADMIN_ALLOWED_EMAILS --name devpulse
-   ```
-
-7. `workers.dev`とPreview URLsを無効化する。この操作に対応する`cf`コマンドは見つかっていないため、
+6. `workers.dev`とPreview URLsを無効化する。この操作に対応する`cf`コマンドは見つかっていないため、
    [設定手順](../devpulse-development/references/authentication.md#workersdevとプレビューurlの無効化)に従い、ダッシュボードで行う。
 
-## 3. 検証
+## 4. 検証
 
 1. `pnpm run doctor`で必須項目に`MISSING`がないことを確認する。
 2. [未認証アクセスの確認](../devpulse-development/references/authentication.md#未認証アクセスが拒否されることの確認)を実行する。
