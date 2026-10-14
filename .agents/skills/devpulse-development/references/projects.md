@@ -1,6 +1,6 @@
 # プロジェクト設定ストア
 
-[README](../../README.md) | [English](../en/projects.md)
+[README](../../../../README.md) | [開発スキル](../SKILL.md)
 
 プロジェクト一覧は`CONFIG` Workers KV名前空間のキー`config:projects:v1`に、
 単一のJSONドキュメント`{ revision, updatedAt, updatedBy, projects }`として保存します。

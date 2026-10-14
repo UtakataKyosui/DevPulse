@@ -24,27 +24,8 @@ pnpm run preview
 
 For static-only development, use `DEVPULSE_API_URL='' pnpm run dev`.
 
-## Documentation
+## Agent development
 
-- [First-time setup checklist](documentation/en/setup-checklist.md): tokens, secrets, authentication, and initial data setup
-- [UI components](documentation/en/ui.md): shadcn/ui and Tailwind CSS
-- [Deployment](documentation/en/deployment.md): initial and regular Cloudflare Workers deployments
-- [Admin authentication](documentation/en/authentication.md): Cloudflare Access setup and local development
-- [Project configuration](documentation/en/projects.md): adding projects, history, rollback, propagation, and priorities
-- [Admin API](documentation/en/admin-api.md): endpoints and validation rules
-- [Progress synchronization](documentation/en/synchronization.md): hourly sync and GitHub token
-- [Daily reports and RSS](documentation/en/reports.md): generation and production setup
-- [Report operations](documentation/en/report-operations.md): manual recovery and content withdrawal
-
-## Checks
-
-```bash
-pnpm run test
-pnpm run check
-pnpm exec tsc --noEmit
-pnpm run format
-```
-
-See [Deployment](documentation/en/deployment.md) and
-[Report operations](documentation/en/report-operations.md) for deployment validation
-and required environment variables.
+See [AGENTS.md](AGENTS.md) for validation rules and the
+[DevPulse development skill](.agents/skills/devpulse-development/SKILL.md)
+for local builds and task-specific guidance.

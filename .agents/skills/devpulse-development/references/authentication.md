@@ -1,6 +1,6 @@
 # 管理者認証（Cloudflare Access）
 
-[README](../../README.md) | [English](../en/authentication.md)
+[README](../../../../README.md) | [開発スキル](../SKILL.md)
 
 `/admin*`と`/api/admin/*`はCloudflare Access ApplicationとWorker側の検証
 （`src/worker/admin-auth.ts`）で二重に保護しています。Workerは
