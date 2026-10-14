@@ -17,7 +17,17 @@ const targets = [
   {
     label: `Worker "${values.worker}"`,
     command: 'pnpm',
-    args: ['exec', 'wrangler', 'secret', 'put', NAME, '--name', values.worker],
+    args: [
+      '--filter',
+      '@devpulse/worker',
+      'exec',
+      'wrangler',
+      'secret',
+      'put',
+      NAME,
+      '--name',
+      values.worker,
+    ],
   },
   {
     label: 'GitHub Actions',
@@ -32,7 +42,16 @@ const checks = [
   {
     label: `Worker "${values.worker}"`,
     command: 'pnpm',
-    args: ['exec', 'wrangler', 'secret', 'list', '--name', values.worker],
+    args: [
+      '--filter',
+      '@devpulse/worker',
+      'exec',
+      'wrangler',
+      'secret',
+      'list',
+      '--name',
+      values.worker,
+    ],
   },
   {
     label: 'GitHub Actions',

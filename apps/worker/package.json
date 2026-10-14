@@ -1,0 +1,25 @@
+{
+  "name": "@devpulse/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --config wrangler.local.jsonc",
+    "deploy": "cf deploy",
+    "deploy:check": "cf deploy --dry-run",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    "./config-store": "./src/config-store.ts"
+  },
+  "dependencies": {
+    "@devpulse/domain": "workspace:*",
+    "@devpulse/admin": "workspace:*",
+    "zod": "^4.6.6"
+  },
+  "devDependencies": {
+    "cf": "1.0.0-beta.14",
+    "wrangler": "^4.149.0",
+    "@cloudflare/workers-types": "^5.20261012.1"
+  }
+}

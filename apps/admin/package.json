@@ -1,0 +1,25 @@
+{
+  "name": "@devpulse/admin",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    "./bundle": "./dist/bundle.ts"
+  },
+  "dependencies": {
+    "@devpulse/domain": "workspace:*",
+    "@devpulse/ui": "workspace:*",
+    "lucide-react": "^1.55.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3",
+    "esbuild": "^0.28.2"
+  }
+}

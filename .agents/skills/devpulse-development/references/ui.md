@@ -2,33 +2,33 @@
 
 [README](../../../../README.md) | [開発スキル](../SKILL.md)
 
-Tailwind CSS v4をRsbuildプラグイン経由で統合しています。`components.json`で
-shadcn/uiの基本コンポーネントの配置先を`src/components/ui/`に設定しています。
+Tailwind CSS v4をRsbuildプラグイン経由で統合しています。ルートの`components.json`で
+shadcn/uiの基本コンポーネントの配置先を`packages/ui/src/`に設定しています。
 ダッシュボードのカード、バッジ、進捗表示、通知にこれらのコンポーネントを使っています。
 プロジェクト詳細では、マイルストーンと最近クローズしたIssueにTable、日別のIssueクローズ数に
-Chart（Recharts）を使っています。TSX/MDXでは`@/components/ui/button`や
-`@/components/ui/badge`からインポートしてください。コンポーネントは次のコマンドで追加できます。
+Chart（Recharts）を使っています。TSX/MDXでは`@devpulse/ui/button`や
+`@devpulse/ui/badge`からインポートしてください。コンポーネントは次のコマンドで追加できます。
 
 ```bash
 pnpm dlx shadcn@latest add card
 ```
 
-`tailwind.css`は色をRspressのテーマ変数に対応付け、`.dark`クラスに従います。
+`apps/web/tailwind.css`は色をRspressのテーマ変数に対応付け、`.dark`クラスに従います。
 ドキュメントのテーマを維持するため、Tailwind Preflightは読み込んでいません。
 
 ## 管理画面（`/admin`）
 
-管理画面は公開サイトとは別に、`src/admin/`のReactアプリとして実装しています。
-`src/components/ui/`のshadcn/uiコンポーネントを共有しますが、スタイルは
-`src/admin/admin.css`（shadcn neutralのテーマ変数、Preflight込み、OSのダークモードに追従）を使います。
+管理画面は公開サイトとは別に、`apps/admin/src/`のReactアプリとして実装しています。
+`packages/ui/src/`のshadcn/uiコンポーネントを共有しますが、スタイルは
+`apps/admin/src/admin.css`（shadcn neutralのテーマ変数、Preflight込み、OSのダークモードに追従）を使います。
 
-- `pnpm run admin:build`（`scripts/build-admin.ts`）がesbuildとTailwind CLIでJSとCSSを生成し、
-  git管理外の`src/worker/admin/generated.ts`に文字列として書き出します。`test`と`build`が先に実行します。
+- `pnpm run admin:build`（`apps/admin/scripts/build.ts`）がesbuildとTailwind CLIでJSとCSSを生成し、
+  git管理外の`apps/admin/dist/bundle.ts`に文字列として書き出します。`test`と`build`が先に実行します。
 - Workerは認可後にだけ`/admin/app.js`と`/admin/app.css`を配信します。公開ビルドには含めません。
 - CSPは`style-src 'self'`のままです。ダイアログなどのプリミティブにはBase UI（`@base-ui/react`）を使います。
   Base UIは`<style>`を挿入せず、スクロール固定もCSSOMで行うため、`'unsafe-inline'`やnonceは不要です。
   `<style>`を挿入するライブラリ（Radixの`react-remove-scroll`など）を足すとCSPで止まります。
 - 選択肢が多いフォームのセレクトは、CSPとテストのしやすさから`native-select`を使います。
-- 公開サイトのナビゲーションにある「管理画面」リンクは、`theme/index.tsx`の`afterNavMenu`にある通常の`<a href="/admin">`です。
+- 公開サイトのナビゲーションにある「管理画面」リンクは、`apps/web/theme/index.tsx`の`afterNavMenu`にある通常の`<a href="/admin">`です。
   クライアントルーターを通さずWorkerに到達させるためで、ログインはCloudflare Accessが要求します。
   `rspress dev`（:8080）はWorkerを動かさないため、このリンク先は開けません。

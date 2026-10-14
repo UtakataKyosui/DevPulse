@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import {
   fetchPublishedProjects,
   PROJECTS_CACHE,
-} from '../src/lib/devpulse/build-config.ts';
+} from '@devpulse/web/build-config';
 
 // 公開 API(GET /api/projects)だけを使うので認証は不要。
 const origin = new URL(process.env.DEVPULSE_SITE_URL ?? '');

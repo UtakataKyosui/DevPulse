@@ -1,0 +1,30 @@
+{
+  "name": "@devpulse/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "rspress dev",
+    "build": "rspress build",
+    "preview": "rspress preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "exports": {
+    "./build-config": "./src/build/build-config.ts"
+  },
+  "dependencies": {
+    "@devpulse/domain": "workspace:*",
+    "@devpulse/ui": "workspace:*",
+    "@rspress/core": "^2.0.22",
+    "@rspress/plugin-rss": "2.0.23",
+    "lucide-react": "^1.55.0",
+    "zod": "^4.6.6",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "recharts": "3.8.0"
+  },
+  "devDependencies": {
+    "@rsbuild/plugin-tailwindcss": "^2.0.3",
+    "tailwindcss": "^4.3.3"
+  }
+}

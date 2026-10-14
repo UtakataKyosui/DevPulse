@@ -1,0 +1,53 @@
+// Local development only. Production deploys use cloudflare.config.ts through cf.
+// No AI binding: report generation is tested with mocks, never called remotely here.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "devpulse-local",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-06",
+  "assets": {
+    "directory": "../web/doc_build",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/",
+      "/index.html",
+      "/api/*",
+      "/reports",
+      "/reports/*",
+      "/rss/*",
+      "/admin*"
+    ]
+  },
+  "kv_namespaces": [
+    {
+      "binding": "CONFIG",
+      "id": "CONFIG"
+    },
+    {
+      "binding": "SNAPSHOTS",
+      "id": "SNAPSHOTS"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "REPORTS",
+      "database_name": "devpulse-local",
+      "database_id": "00000000-0000-0000-0000-000000000001"
+    }
+  ],
+  "vars": {
+    "ADMIN_AUTH_BYPASS": "1",
+    "ADMIN_SETTINGS": {
+      "githubOwner": "UtakataKyosui"
+    },
+    "ACCESS_SETTINGS": {
+      "teamDomain": "",
+      "aud": ""
+    },
+    "REPORT_SETTINGS": {
+      "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+      "maxTokens": 1200,
+      "maxInputChars": 24000
+    }
+  }
+}

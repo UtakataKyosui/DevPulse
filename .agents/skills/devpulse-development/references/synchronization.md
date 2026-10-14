@@ -16,7 +16,7 @@ GitHubリクエストにはWorkerシークレット`GITHUB_TOKEN`を使用しま
 同期失敗やレート制限はWorkerログで確認してください。
 `snapshots.json`はビルド時のフォールバックであり、ライブデータの保存先ではありません。
 
-ローカルで試すには`pnpm run build`、`pnpm exec cf dev`を実行してから次を実行します。
+ローカルで試すには`pnpm run build`、`pnpm run dev:worker`を実行してから次を実行します。
 
 ```bash
 curl http://localhost:8787/cdn-cgi/local/scheduled

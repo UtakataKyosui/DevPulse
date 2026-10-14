@@ -4,10 +4,10 @@
 - Run `pnpm run check` for linting. This command also writes fixes; inspect the diff.
 - Run `pnpm run format` for formatting and inspect the diff for unrelated changes.
 - Run relevant tests with `pnpm run test`; type-check TypeScript changes with
-  `pnpm exec tsc --noEmit`.
-- The admin UI (`src/admin`, React + shadcn/ui) is bundled into the gitignored
-  `src/worker/admin/generated.ts` by `pnpm run admin:build`. `test` and `build`
-  run it; run it yourself before `tsc` on a fresh checkout.
+  `pnpm run typecheck`.
+- The admin UI (`apps/admin/src`, React + shadcn/ui) is bundled into the gitignored
+  `apps/admin/dist/bundle.ts` by `pnpm run admin:build`. `test` and `build`
+  run it; run it yourself before `pnpm run typecheck` on a fresh checkout.
 - Documentation-only changes need link and Markdown checks; runtime tests are
   unnecessary unless executable examples or application behavior change.
 - Follow the DevPulse development skill for local builds and deployment
