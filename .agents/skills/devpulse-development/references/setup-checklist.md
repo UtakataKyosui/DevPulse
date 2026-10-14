@@ -38,6 +38,6 @@ Accessで保護する本番ドメインを用意し、`DEVPULSE_SITE_URL`には�
 ## データ投入と検証
 
 1. [プロジェクト設定の本番移行](projects.md#本番環境の移行)に従い、設定の取得元がまだない場合はフィクスチャを明示して初回デプロイします。既存のレポートアーカイブがある環境では、先に保存済みレポートを取得してください。
-2. `pnpm run config:seed -- --remote --namespace-id <id>`で`CONFIG` KV名前空間に初期データを投入します。
+2. `pnpm run config:seed --remote --namespace-id <id>`で`CONFIG` KV名前空間に初期データを投入します。
 3. `GET /api/projects`で設定を確認し、**Publish daily reports**ワークフローを実行します。レポートの初回公開は[本番設定](reports.md#本番環境の設定)に従ってください。
 4. [未認証アクセスの確認](authentication.md#未認証アクセスが拒否されることの確認)を実行します。
