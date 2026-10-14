@@ -11,19 +11,20 @@
 トークンなし・不正・期限切れは401、`aud`の不一致・メールアドレスが許可されていない場合は403、
 Access設定が不足している場合は503を返し、アクセスを拒否します。
 
-Workerのシークレットはダッシュボードで設定し、シェル引数には指定しないでください。
+チームドメインとAUDタグは`cloudflare.config.ts`の`ACCESS_SETTINGS`に記載します。
+許可するメールアドレスはWorkerシークレットで、ダッシュボードで設定し、シェル引数には指定しないでください。
 
-| 名前 | 値 |
+| 設定 | 値 |
 |---|---|
-| `ACCESS_TEAM_DOMAIN` | `<team>.cloudflareaccess.com`などのチームドメイン |
-| `ACCESS_AUD` | Access ApplicationのApplication Audience（AUD）タグ |
-| `ADMIN_ALLOWED_EMAILS` | 許可するメールアドレスのカンマ区切りリスト（このプロジェクトでは1件） |
+| `ACCESS_SETTINGS.teamDomain` | `<team>.cloudflareaccess.com`などのチームドメイン |
+| `ACCESS_SETTINGS.aud` | Access ApplicationのApplication Audience（AUD）タグ |
+| `ADMIN_ALLOWED_EMAILS`（シークレット） | 許可するメールアドレスのカンマ区切りリスト（このプロジェクトでは1件） |
 
 ### Accessの設定
 
 1. Zero Trust > Access > Applicationsで、セルフホスト型アプリケーションを追加し、本番ドメインの公開ホスト名・パスとして`/admin*`と`/api/admin/*`を設定します。
 2. ログイン方法にGitHubを追加し、所有者のメールアドレスだけを許可するポリシーを設定します。
-3. ApplicationのAUDタグとチームドメインを上記のシークレットに設定します。
+3. ApplicationのAUDタグとチームドメインを`ACCESS_SETTINGS`に設定してデプロイし、許可するメールアドレスを`ADMIN_ALLOWED_EMAILS`シークレットに設定します。
 4. 料金とユーザー数：Cloudflare Zero Trustには少人数向けの無料プランがあります（前回確認時は50人）。現在の上限と料金はCloudflareダッシュボードで確認してください。**要確認**。
 
 ### `workers.dev`とプレビューURLの無効化

@@ -15,8 +15,6 @@ export const ENV_MANIFEST: readonly EnvItem[] = [
   { place: 'github-secret', name: 'REPORTS_TOKEN', required: true },
   { place: 'worker-secret', name: 'REPORTS_TOKEN', required: true },
   { place: 'worker-secret', name: 'GITHUB_TOKEN', required: false },
-  { place: 'worker-secret', name: 'ACCESS_TEAM_DOMAIN', required: true },
-  { place: 'worker-secret', name: 'ACCESS_AUD', required: true },
   { place: 'worker-secret', name: 'ADMIN_ALLOWED_EMAILS', required: true },
 ];
 

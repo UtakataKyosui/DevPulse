@@ -10,32 +10,48 @@
         "link": "/projects/devpulse/"
       },
       {
-        "label": "LifeBoard",
-        "link": "/projects/lifeboard/"
+        "label": "Sample Unsynced",
+        "link": "/projects/sample-unsynced/"
       },
       {
-        "label": "astro-portfolio-with-blog",
-        "link": "/projects/astro-portfolio-with-blog/"
-      },
+        "label": "Sample Private",
+        "link": "/projects/sample-private/"
+      }
+    ]
+  },
+  {
+    "type": "custom-link",
+    "label": "Planned（計画中）",
+    "collapsible": true,
+    "collapsed": false,
+    "items": [
       {
-        "label": "gh-extension-template",
-        "link": "/projects/gh-extension-template/"
-      },
+        "label": "Sample Empty",
+        "link": "/projects/sample-empty/"
+      }
+    ]
+  },
+  {
+    "type": "custom-link",
+    "label": "Is Pending（休止中）",
+    "collapsible": true,
+    "collapsed": false,
+    "items": [
       {
-        "label": "axvern",
-        "link": "/projects/axvern/"
-      },
+        "label": "Sample Unselected",
+        "link": "/projects/sample-unselected/"
+      }
+    ]
+  },
+  {
+    "type": "custom-link",
+    "label": "Complete（完了）",
+    "collapsible": true,
+    "collapsed": false,
+    "items": [
       {
-        "label": "daily-reflection-system",
-        "link": "/projects/daily-reflection-system/"
-      },
-      {
-        "label": "repositories-manage",
-        "link": "/projects/repositories-manage/"
-      },
-      {
-        "label": "gh-scaffold",
-        "link": "/projects/gh-scaffold/"
+        "label": "Sample Closed",
+        "link": "/projects/sample-closed/"
       }
     ]
   }

@@ -7,8 +7,7 @@ const DOMAIN = 'team.cloudflareaccess.com';
 const AUD = 'aud-tag-123';
 const NOW = 1_800_000_000_000;
 const config = {
-  ACCESS_TEAM_DOMAIN: DOMAIN,
-  ACCESS_AUD: AUD,
+  ACCESS_SETTINGS: { teamDomain: DOMAIN, aud: AUD },
   ADMIN_ALLOWED_EMAILS: 'Owner@example.com',
 };
 
@@ -139,6 +138,15 @@ describe('admin Cloudflare Access verification', () => {
 
   it('fails closed when Access settings are missing', async () => {
     expect(await status(await sign(valid), {} as typeof config)).toBe(503);
+  });
+
+  it('fails closed while the Access settings are still empty', async () => {
+    expect(
+      await status(await sign(valid), {
+        ...config,
+        ACCESS_SETTINGS: { teamDomain: '', aud: '' },
+      }),
+    ).toBe(503);
   });
 
   it('honors the bypass only on loopback hosts', async () => {
