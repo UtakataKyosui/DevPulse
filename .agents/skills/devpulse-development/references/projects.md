@@ -19,7 +19,7 @@ id・slug・リポジトリの重複を拒否します。書き込み直前に�
 
 ```bash
 pnpm run config:seed                                            # ローカルのcf dev KV
-pnpm run config:seed -- --remote --namespace-id <CONFIG namespace id>
+pnpm run config:seed --remote --namespace-id <CONFIG namespace id>
 ```
 
 ローカルの初期投入は、バインディング名を名前空間IDとして`.wrangler/state`配下に書き込みます。
@@ -80,7 +80,7 @@ DEVPULSE_PROJECTS_FIXTURE=src/data/devpulse/projects.sample.json pnpm run build
 次の順番で実行してください（コード変更時には未実施です。各手順には本番環境へのアクセスが必要です）。
 
 1. `CONFIG`を読み込むWorkerをデプロイし（`cf deploy`で名前空間を作成）、ダッシュボードで名前空間IDを確認します。
-2. `pnpm run config:seed -- --remote --namespace-id <id>`で初期データを投入します。
+2. `pnpm run config:seed --remote --namespace-id <id>`で初期データを投入します。
 3. `GET /api/projects`が8プロジェクトを返すことを確認し、**Publish daily reports**ワークフローを実行してビルド時に取得します。
 4. ホーム、サイドバー、詳細ページが移行前と同じ表示であることを確認します。`/admin`での変更がAPIとホームに即座に反映され、次のビルド後にサイドバーと詳細ページに反映されることも確認します。
 

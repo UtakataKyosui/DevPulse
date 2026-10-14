@@ -6,7 +6,7 @@ import { parseArgs } from 'node:util';
 import { CONFIG_KEY, writeProjectConfig } from '../src/worker/config-store.ts';
 
 // Usage: pnpm run config:seed                               (local `cf dev` KV)
-//        pnpm run config:seed -- --remote --namespace-id ID (production)
+//        pnpm run config:seed --remote --namespace-id ID (production)
 const { values } = parseArgs({
   options: {
     remote: { type: 'boolean', default: false },
