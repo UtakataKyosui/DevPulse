@@ -1,21 +1,25 @@
 import { describe, expect, it, vi } from 'vitest';
 import projectsJson from '../data/devpulse/projects.json';
 import {
+  CONFIG_HISTORY_KEY,
   CONFIG_KEY,
   ConfigConflictError,
   ConfigInvalidError,
   ConfigMissingError,
+  HISTORY_LIMIT,
   readProjectConfig,
+  readProjectHistory,
   writeProjectConfig,
 } from './config-store.ts';
 
 function kv(initial: string | null = null) {
-  let value = initial;
-  const get = vi.fn(async () => value);
-  const put = vi.fn(async (_key: string, text: string) => {
-    value = text;
+  const values = new Map<string, string>();
+  if (initial !== null) values.set(CONFIG_KEY, initial);
+  const get = vi.fn(async (key: string) => values.get(key) ?? null);
+  const put = vi.fn(async (key: string, text: string) => {
+    values.set(key, text);
   });
-  return { get, put, value: () => value } as const;
+  return { get, put, values } as const;
 }
 
 const now = new Date('2026-10-14T00:00:00Z');
@@ -141,6 +145,101 @@ describe('project config store', () => {
     await expect(readProjectConfig(kv(duplicated))).rejects.toThrow(
       /duplicate/,
     );
+  });
+
+  it('keeps the replaced revisions newest first, without the current one', async () => {
+    const store = kv();
+    const seed = await writeProjectConfig(store, {
+      projects,
+      expectedRevision: null,
+      updatedBy: 'seed',
+    });
+    // The first write has nothing to replace, so the seed never touches history.
+    expect(store.values.has(CONFIG_HISTORY_KEY)).toBe(false);
+    await writeProjectConfig(store, {
+      projects: projects.slice(0, 1),
+      expectedRevision: 1,
+      updatedBy: 'admin',
+    });
+    await writeProjectConfig(store, {
+      projects: projects.slice(0, 2),
+      expectedRevision: 2,
+      updatedBy: 'admin',
+    });
+    const history = await readProjectHistory(store);
+    expect(history.map((entry) => entry.revision)).toEqual([2, 1]);
+    expect(history[1]).toEqual(seed);
+    expect((await readProjectConfig(store)).revision).toBe(3);
+  });
+
+  it(`drops entries beyond ${HISTORY_LIMIT}`, async () => {
+    const store = kv();
+    for (let revision = 0; revision <= HISTORY_LIMIT + 2; revision++)
+      await writeProjectConfig(store, {
+        projects,
+        expectedRevision: revision === 0 ? null : revision,
+        updatedBy: 'admin',
+      });
+    const history = await readProjectHistory(store);
+    expect(history).toHaveLength(HISTORY_LIMIT);
+    expect(history[0]?.revision).toBe(HISTORY_LIMIT + 2);
+    expect(history.at(-1)?.revision).toBe(3);
+  });
+
+  it('writes history before the config and does not duplicate a revision', async () => {
+    const store = kv();
+    await writeProjectConfig(store, {
+      projects,
+      expectedRevision: null,
+      updatedBy: 'seed',
+    });
+    store.put.mockClear();
+    // The config put fails after history was written; the retry must not
+    // record revision 1 twice.
+    store.put.mockImplementationOnce(async (key, text) => {
+      store.values.set(key, text);
+    });
+    store.put.mockImplementationOnce(async () => {
+      throw new Error('KV unavailable');
+    });
+    await expect(
+      writeProjectConfig(store, {
+        projects,
+        expectedRevision: 1,
+        updatedBy: 'admin',
+      }),
+    ).rejects.toThrow('KV unavailable');
+    expect(store.put.mock.calls.map(([key]) => key)).toEqual([
+      CONFIG_HISTORY_KEY,
+      CONFIG_KEY,
+    ]);
+    await writeProjectConfig(store, {
+      projects,
+      expectedRevision: 1,
+      updatedBy: 'admin',
+    });
+    expect(
+      (await readProjectHistory(store)).map((entry) => entry.revision),
+    ).toEqual([1]);
+  });
+
+  it('refuses to write over a corrupt history', async () => {
+    const store = kv();
+    await writeProjectConfig(store, {
+      projects,
+      expectedRevision: null,
+      updatedBy: 'seed',
+    });
+    store.values.set(CONFIG_HISTORY_KEY, '{oops');
+    store.put.mockClear();
+    await expect(
+      writeProjectConfig(store, {
+        projects,
+        expectedRevision: 1,
+        updatedBy: 'admin',
+      }),
+    ).rejects.toThrow(new RegExp(`${CONFIG_HISTORY_KEY} is invalid`));
+    expect(store.put).not.toHaveBeenCalled();
   });
 
   it('refuses to overwrite a corrupt stored value', async () => {
