@@ -11,7 +11,9 @@ import {
   ConfigInvalidError,
   type ConfigKv,
   ConfigMissingError,
+  HISTORY_LIMIT,
   readProjectConfig,
+  readProjectHistory,
   writeProjectConfig,
 } from './config-store.ts';
 
@@ -27,10 +29,12 @@ type FieldError = { path: string; message: string };
 const MAX_BODY_BYTES = 256 * 1024;
 const MUTATING = new Set(['POST', 'PUT', 'DELETE']);
 
-const requestSchema = z.object({
+const putSchema = z.object({
   revision: z.number().int().positive(),
   projects: z.array(z.unknown()),
 });
+/** 復元の楽観ロック。`revision` は画面が読んだ現在の revision(復元元ではない)。 */
+const restoreSchema = z.object({ revision: z.number().int().positive() });
 
 function json(body: unknown, status = 200, extra?: HeadersInit): Response {
   return Response.json(body, {
@@ -173,57 +177,77 @@ async function publicityErrors(
   return errors;
 }
 
-async function putConfig(
+async function readBody<T>(
   request: Request,
-  env: AdminApiEnv,
-  fetcher: typeof fetch,
-  email: string,
-): Promise<Response> {
+  schema: z.ZodType<T>,
+): Promise<{ ok: true; data: T } | { ok: false; response: Response }> {
   const raw = await request.text();
-  if (raw.length > MAX_BODY_BYTES) return json({ error: 'too_large' }, 413);
+  if (raw.length > MAX_BODY_BYTES)
+    return { ok: false, response: json({ error: 'too_large' }, 413) };
   let body: unknown;
   try {
     body = JSON.parse(raw);
   } catch {
-    return json({ error: 'invalid_json' }, 400);
+    return { ok: false, response: json({ error: 'invalid_json' }, 400) };
   }
-  const parsed = requestSchema.safeParse(body);
+  const parsed = schema.safeParse(body);
   if (!parsed.success)
-    return json(
-      { error: 'validation', errors: fieldErrors(parsed.error) },
-      422,
-    );
+    return {
+      ok: false,
+      response: json(
+        { error: 'validation', errors: fieldErrors(parsed.error) },
+        422,
+      ),
+    };
+  return { ok: true, data: parsed.data };
+}
 
+/** GitHub を呼ばずに済む検証。履歴の取得時にも使い、復元前に画面へ出す。 */
+function offlineErrors(
+  projects: unknown,
+  current: ProjectDefinition[],
+): { projects: ProjectDefinition[]; errors: [] } | { errors: FieldError[] } {
+  const config = projectConfigSchema.safeParse({ projects });
+  if (!config.success) return { errors: fieldErrors(config.error) };
+  const errors = slugErrors(config.data.projects, current);
+  return errors.length > 0
+    ? { errors }
+    : { projects: config.data.projects, errors: [] };
+}
+
+/** PUT と復元で共通の保存処理。expectedRevision は呼び出し側が読んだ現在 revision。 */
+async function saveProjects(
+  input: { projects: unknown; expectedRevision: number },
+  env: AdminApiEnv,
+  fetcher: typeof fetch,
+  email: string,
+): Promise<Response> {
   const current = await readProjectConfig(env.CONFIG);
-  if (parsed.data.revision !== current.revision)
+  if (input.expectedRevision !== current.revision)
     return json({ error: 'conflict', revision: current.revision }, 409);
 
-  const config = projectConfigSchema.safeParse({
-    projects: parsed.data.projects,
-  });
-  if (!config.success)
-    return json(
-      { error: 'validation', errors: fieldErrors(config.error) },
-      422,
-    );
-
-  const errors = [
-    ...slugErrors(config.data.projects, current.projects),
-    ...(await publicityErrors(
-      config.data.projects,
-      current.projects,
-      env,
-      fetcher,
-    )),
-  ];
+  const checked = offlineErrors(input.projects, current.projects);
+  if (!('projects' in checked))
+    return json({ error: 'validation', errors: checked.errors }, 422);
+  const errors = await publicityErrors(
+    checked.projects,
+    current.projects,
+    env,
+    fetcher,
+  );
   if (errors.length > 0) return json({ error: 'validation', errors }, 422);
 
   const saved = await writeProjectConfig(env.CONFIG, {
-    projects: config.data.projects,
+    projects: checked.projects,
     expectedRevision: current.revision,
     updatedBy: email,
   });
   return json(saved);
+}
+
+async function findHistoryEntry(env: AdminApiEnv, revision: number) {
+  const history = await readProjectHistory(env.CONFIG);
+  return history.find((entry) => entry.revision === revision) ?? null;
 }
 
 /** 新規追加プロジェクトの初期値。UI は候補選択時にこれを使う。 */
@@ -267,21 +291,60 @@ export async function handleAdminApi(
   if (MUTATING.has(method) && request.headers.get('Origin') !== url.origin)
     return json({ error: 'origin_mismatch' }, 403);
 
+  const historyMatch = /^\/api\/admin\/history\/(\d+)(\/restore)?$/.exec(path);
+  const historyRevision = historyMatch ? Number(historyMatch[1]) : null;
   const route =
     path === '/api/admin/config'
       ? { allow: 'GET, PUT' }
-      : path === '/api/admin/candidates'
+      : path === '/api/admin/candidates' || path === '/api/admin/history'
         ? { allow: 'GET' }
-        : null;
+        : historyMatch
+          ? { allow: historyMatch[2] ? 'POST' : 'GET' }
+          : null;
   if (!route) return json({ error: 'not_found' }, 404);
   if (!route.allow.split(', ').includes(method))
     return json({ error: 'method_not_allowed' }, 405, { Allow: route.allow });
 
   try {
     if (path === '/api/admin/config') {
-      if (method === 'PUT')
-        return await putConfig(request, env, fetcher, auth.email);
-      return json(await readProjectConfig(env.CONFIG));
+      if (method === 'GET') return json(await readProjectConfig(env.CONFIG));
+      const body = await readBody(request, putSchema);
+      if (!body.ok) return body.response;
+      return await saveProjects(
+        { projects: body.data.projects, expectedRevision: body.data.revision },
+        env,
+        fetcher,
+        auth.email,
+      );
+    }
+    if (path === '/api/admin/history') {
+      const current = await readProjectConfig(env.CONFIG);
+      const history = await readProjectHistory(env.CONFIG);
+      return json({
+        revision: current.revision,
+        limit: HISTORY_LIMIT,
+        entries: history.map(({ projects, ...meta }) => ({
+          ...meta,
+          projectCount: projects.length,
+        })),
+      });
+    }
+    if (historyRevision !== null) {
+      const entry = await findHistoryEntry(env, historyRevision);
+      if (!entry) return json({ error: 'not_found' }, 404);
+      if (method === 'GET') {
+        const current = await readProjectConfig(env.CONFIG);
+        const { errors } = offlineErrors(entry.projects, current.projects);
+        return json({ ...entry, errors });
+      }
+      const body = await readBody(request, restoreSchema);
+      if (!body.ok) return body.response;
+      return await saveProjects(
+        { projects: entry.projects, expectedRevision: body.data.revision },
+        env,
+        fetcher,
+        auth.email,
+      );
     }
     const current = await readProjectConfig(env.CONFIG);
     const candidates = await listCandidates(env, fetcher, current.projects);

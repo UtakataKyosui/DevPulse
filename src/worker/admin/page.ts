@@ -30,6 +30,11 @@ const HTML = `<!doctype html>
     <h2>リポジトリを追加</h2>
     <div id="candidates"></div>
   </section>
+  <section class="tier" aria-labelledby="history-title">
+    <h2 id="history-title">変更履歴</h2>
+    <p id="history-note" class="muted"></p>
+    <ol id="history" class="history"></ol>
+  </section>
 </main>
 <dialog id="diff-dialog" aria-labelledby="diff-title">
   <h2 id="diff-title">保存する変更</h2>
@@ -37,6 +42,16 @@ const HTML = `<!doctype html>
   <div class="toolbar">
     <button id="diff-confirm" type="button">この内容で保存</button>
     <button id="diff-cancel" type="button">キャンセル</button>
+  </div>
+</dialog>
+<dialog id="restore-dialog" aria-labelledby="restore-title">
+  <h2 id="restore-title"></h2>
+  <p id="restore-note"></p>
+  <ul id="restore-errors" class="error"></ul>
+  <ul id="restore-diff"></ul>
+  <div class="toolbar">
+    <button id="restore-confirm" type="button">この内容で復元</button>
+    <button id="restore-cancel" type="button">キャンセル</button>
   </div>
 </dialog>
 <script src="/admin/app.js"></script>
@@ -80,6 +95,8 @@ body { margin: 0; padding: 0 1rem 4rem; max-width: 60rem; margin-inline: auto; l
 .empty { color: GrayText; }
 button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 3px solid Highlight; outline-offset: 2px; }
 dialog { max-width: 40rem; }
+.history { padding-left: 1.5rem; }
+.history-item { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin: .35rem 0; }
 `;
 
 const NO_STORE = 'no-store';
