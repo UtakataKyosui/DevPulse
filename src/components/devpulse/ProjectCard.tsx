@@ -3,8 +3,19 @@ import { Card, CardContent, CardHeader } from '../ui/card.tsx';
 import { MilestoneGauge } from './MilestoneGauge.tsx';
 import type { CardModel } from './model.ts';
 import { ProgressGauge } from './ProgressGauge.tsx';
+import { isPriority, PRIORITY_LABELS, type Priority } from './priorities.ts';
 
-export function ProjectCard({ card }: { card: CardModel }) {
+export function ProjectCard({
+  card,
+  priority = 'unset',
+  priorityDisabled = false,
+  onPriorityChange,
+}: {
+  card: CardModel;
+  priority?: Priority;
+  priorityDisabled?: boolean;
+  onPriorityChange?: (priority: Priority) => void;
+}) {
   const { health } = card;
   return (
     <li>
@@ -18,6 +29,26 @@ export function ProjectCard({ card }: { card: CardModel }) {
           <p className="devpulse-card__desc">{card.description}</p>
         </CardHeader>
         <CardContent className="px-0">
+          {onPriorityChange && (
+            <label className="devpulse-card__priority">
+              着手優先度
+              <select
+                aria-label={`${card.name}の着手優先度`}
+                value={priority}
+                disabled={priorityDisabled}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  if (isPriority(value)) onPriorityChange(value);
+                }}
+              >
+                {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <div className="devpulse-card__badges">
             <Badge variant="secondary">Lifecycle: {card.lifecycleLabel}</Badge>
             <Badge className={`devpulse-tone--${health.tone}`}>

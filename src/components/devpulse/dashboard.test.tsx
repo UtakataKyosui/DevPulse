@@ -269,6 +269,9 @@ describe('ProjectDashboard 描画', () => {
     expect(html).toContain('最終同期');
     expect(html).toContain('古い、または未取得');
     expect(html).toContain('—');
+    expect(html).toContain('aria-label="Name aの着手優先度"');
+    expect(html).toContain('最優先');
+    expect(html).toContain('他の端末や閲覧者には共有されません');
   });
 
   it('プロジェクトが0件なら空状態を表示する', () => {
