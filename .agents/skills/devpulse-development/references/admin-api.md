@@ -1,6 +1,6 @@
 # 管理者API
 
-[README](../../../../../README.md) | [English](../en/admin-api.md)
+[README](../../../../README.md) | [開発スキル](../SKILL.md)
 
 すべてのエンドポイントはAccessによる認証（`src/worker/admin-api.ts`）で保護され、
 `Cache-Control: no-store`を返します。`POST` / `PUT` / `DELETE`では、
