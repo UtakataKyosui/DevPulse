@@ -11,11 +11,15 @@ import {
   snapshotFileSchema,
 } from './src/lib/devpulse/index.ts';
 import { buildProjectSidebar } from './src/lib/devpulse/project-sidebar.ts';
+import { renderFeedContent } from './src/lib/reports/feed.ts';
 import { loadReports, prepareReports } from './src/lib/reports/prepare.ts';
 
 const reports = loadReports(__dirname);
 const reportDates = prepareReports(__dirname, reports);
 const feedDates = new Set(reportDates.slice(0, 30));
+const reportsByDate = new Map(
+  reports.map((report) => [report.input.date, report]),
+);
 const siteUrl = process.env.DEVPULSE_SITE_URL ?? 'http://localhost:8080';
 const origin = new URL(siteUrl);
 if (
@@ -58,7 +62,14 @@ export default defineConfig({
         id: 'reports',
         title: 'DevPulse 日次進捗レポート',
         language: 'ja',
-        item: (item) => ({ ...item, id: item.link }),
+        item: (item) => {
+          const date = /^\/reports\/(\d{4}-\d{2}-\d{2})\//.exec(
+            new URL(item.link).pathname,
+          )?.[1];
+          const report = date ? reportsByDate.get(date) : undefined;
+          if (!report) throw new Error('Missing saved report for RSS item');
+          return { ...item, id: item.link, content: renderFeedContent(report) };
+        },
         test: (page) => {
           const date = /^\/reports\/(\d{4}-\d{2}-\d{2})\//.exec(
             page.routePath,
