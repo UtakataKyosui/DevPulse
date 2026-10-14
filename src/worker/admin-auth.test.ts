@@ -7,8 +7,7 @@ const DOMAIN = 'team.cloudflareaccess.com';
 const AUD = 'aud-tag-123';
 const NOW = 1_800_000_000_000;
 const config = {
-  ACCESS_TEAM_DOMAIN: DOMAIN,
-  ACCESS_AUD: AUD,
+  ACCESS_SETTINGS: { teamDomain: DOMAIN, aud: AUD },
   ADMIN_ALLOWED_EMAILS: 'Owner@example.com',
 };
 
@@ -135,10 +134,36 @@ describe('admin Cloudflare Access verification', () => {
     expect(
       await status(await sign({ ...valid, iss: 'https://evil.example' })),
     ).toBe(401);
+    const { iss: _iss, ...noIssuer } = valid;
+    expect(await status(await sign(noIssuer))).toBe(401);
   });
 
   it('fails closed when Access settings are missing', async () => {
     expect(await status(await sign(valid), {} as typeof config)).toBe(503);
+  });
+
+  it('fails closed while the Access settings are still empty', async () => {
+    expect(
+      await status(await sign(valid), {
+        ...config,
+        ACCESS_SETTINGS: { teamDomain: '', aud: '' },
+      }),
+    ).toBe(503);
+  });
+
+  it('fails closed when only one Access setting is present', async () => {
+    expect(
+      await status(await sign(valid), {
+        ...config,
+        ACCESS_SETTINGS: { teamDomain: DOMAIN },
+      } as unknown as typeof config),
+    ).toBe(503);
+    expect(
+      await status(await sign(valid), {
+        ...config,
+        ACCESS_SETTINGS: { aud: AUD },
+      } as unknown as typeof config),
+    ).toBe(503);
   });
 
   it('honors the bypass only on loopback hosts', async () => {

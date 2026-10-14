@@ -14,9 +14,12 @@ export default defineConfig({
       AI: bindings.ai(),
       REPORTS_TOKEN: bindings.secret(),
       GITHUB_TOKEN: bindings.secret(),
-      ACCESS_TEAM_DOMAIN: bindings.secret(),
-      ACCESS_AUD: bindings.secret(),
       ADMIN_ALLOWED_EMAILS: bindings.secret(),
+      // Empty values keep /admin closed (503).
+      ACCESS_SETTINGS: bindings.json({
+        teamDomain: 'REDACTED_TEAM_DOMAIN',
+        aud: 'REDACTED_AUD',
+      }),
       // Owner whose public repositories can be added; never derived from the user.
       ADMIN_SETTINGS: bindings.json({ githubOwner: 'UtakataKyosui' }),
       REPORT_SETTINGS: bindings.json({

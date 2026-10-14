@@ -13,6 +13,8 @@ All three paths resolve to the same files, including bundled references.
 
 - Read [devpulse-development](.agents/skills/devpulse-development/SKILL.md)
   for local builds, documentation routing, and deployment validation.
+- Read [devpulse-cloudflare-setup](.agents/skills/devpulse-cloudflare-setup/SKILL.md)
+  for production Cloudflare setup with the `cf` CLI: API token, Access, and Worker secrets.
 - Use the Rspress skills for site configuration, documentation, and descriptions.
 - Use [workers-best-practices](.agents/skills/workers-best-practices/SKILL.md)
   for Worker code and configuration changes. This is the official Cloudflare skill.

@@ -5,10 +5,11 @@ import { z } from 'zod';
  * Independent from REPORTS_TOKEN (CI bearer): the two must never be mixed.
  */
 export type AdminAuthEnv = {
-  /** Access team domain, e.g. `example.cloudflareaccess.com` (no scheme). */
-  ACCESS_TEAM_DOMAIN?: string;
-  /** Application Audience (AUD) tag of the Access Application. */
-  ACCESS_AUD?: string;
+  /**
+   * Access team domain (e.g. `example.cloudflareaccess.com`, no scheme) and the
+   * Application Audience (AUD) tag of the Access Application. Empty = not configured.
+   */
+  ACCESS_SETTINGS?: { teamDomain: string; aud: string };
   /** Comma-separated allowed emails. */
   ADMIN_ALLOWED_EMAILS?: string;
   /**
@@ -31,7 +32,7 @@ const payloadSchema = z.object({
   aud: z.union([z.string(), z.array(z.string())]),
   exp: z.number(),
   nbf: z.number().optional(),
-  iss: z.string().optional(),
+  iss: z.string(),
   email: z.string().optional(),
 });
 const jwksSchema = z.object({
@@ -97,8 +98,8 @@ export async function authorizeAdmin(
   if (env.ADMIN_AUTH_BYPASS === '1' && LOOPBACK_HOSTS.has(url.hostname))
     return { ok: true, email: 'local-bypass' };
 
-  const domain = normalizedTeamDomain(env.ACCESS_TEAM_DOMAIN);
-  const aud = env.ACCESS_AUD?.trim();
+  const domain = normalizedTeamDomain(env.ACCESS_SETTINGS?.teamDomain);
+  const aud = env.ACCESS_SETTINGS?.aud?.trim();
   const allowed = (env.ADMIN_ALLOWED_EMAILS ?? '')
     .split(',')
     .map((e) => e.trim().toLowerCase())
@@ -144,8 +145,7 @@ export async function authorizeAdmin(
       return { ok: false, status: 401 };
     if (claims.nbf !== undefined && claims.nbf - CLOCK_SKEW_SECONDS > seconds)
       return { ok: false, status: 401 };
-    if (claims.iss !== undefined && claims.iss !== `https://${domain}`)
-      return { ok: false, status: 401 };
+    if (claims.iss !== `https://${domain}`) return { ok: false, status: 401 };
     const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
     if (!audiences.includes(aud)) return { ok: false, status: 403 };
     const email = claims.email?.toLowerCase();

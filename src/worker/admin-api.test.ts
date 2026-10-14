@@ -301,8 +301,7 @@ describe('admin API', () => {
     const strict: AdminApiEnv = {
       ...env,
       ADMIN_AUTH_BYPASS: undefined,
-      ACCESS_TEAM_DOMAIN: 'team.cloudflareaccess.com',
-      ACCESS_AUD: 'aud',
+      ACCESS_SETTINGS: { teamDomain: 'team.cloudflareaccess.com', aud: 'aud' },
       ADMIN_ALLOWED_EMAILS: 'me@example.com',
     };
     const fetcher = github({});

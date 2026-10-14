@@ -28,6 +28,7 @@ pnpm run preview
 作業に関係する資料だけを読む。
 
 - [初回セットアップ](references/setup-checklist.md)：トークン、シークレット、認証、データ投入。
+  `cf`CLIで実行する手順は[devpulse-cloudflare-setup](../devpulse-cloudflare-setup/SKILL.md)を使う。
 - [UI](references/ui.md)：shadcn/uiとTailwind CSSの実装方針。
 - [デプロイ](references/deployment.md)：初回・通常デプロイと検証。
 - [管理者認証](references/authentication.md)：Cloudflare Accessとローカル管理画面の開発。
