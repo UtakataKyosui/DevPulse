@@ -3,12 +3,37 @@
 [README](../../../../README.md) | [開発スキル](../SKILL.md)
 
 KV設定（`config:projects:v1`）の`published`なプロジェクトが同期対象のリポジトリを定義します。
-Workerは実行のたびに設定を読み込み、毎時（`0 * * * *`、UTC）、公開GitHubマイルストーン、
+Workerは実行のたびに設定を読み込み、毎時07分・37分（`7,37 * * * *`、UTC）の30分間隔で、公開GitHubマイルストーン、
 クローズしたIssue、最新コミットを取得し、正規化したスナップショットをWorkers KVに書き込みます。
 `GET /api/snapshots`と`GET /api/projects`（tier順）はリクエストごとに設定を読み込みます。
 設定がなければ同期はエラーで停止し、APIは503を返します。フィクスチャは使用しません。
 レポートは生成時の設定を使い、過去のレポートは変更しません。
 `cf deploy`が`SNAPSHOTS`名前空間を作成し、Cron Triggerを設定します。
+Cronの起動は遅延・欠落することがあるため、厳密な30分更新は保証しません。鮮度はスナップショットの
+`fetchedAt`と、全リポジトリの取得に成功した最後の時刻`lastSuccessAt`で判断します。
+
+### 重複実行の抑制とレート制限
+
+- 同期は`REPORTS`（D1）の`sync_lock`表のリースで排他制御します。Cron、日次レポート生成、手動実行のどれかが
+  実行中なら、後から来た実行はGitHubを呼ばずに`busy`で終わります。リースは20分で失効します。
+- GitHubが429、残量0の403、`Retry-After`付きの403を返したら再試行せず、同期全体を中断します。
+  更新できなかったリポジトリは最後の成功データ（最大48時間）を保持し、ログに`snapshot_sync_rate_limited`
+  （`retryAfterSeconds`、`resetAt`）を記録します。次のCronで再開します。
+
+### 条件付きリクエスト
+
+GitHubの応答のETagを、同期に使う項目だけに絞った本文とともに`SNAPSHOTS`の`sync-etags:v1`に保存します
+（トークンや未使用の項目は保存しません）。次回はページごとに`If-None-Match`を付け、304なら保存した本文を使います。
+壊れた・古い形式の値は捨てて通常の取得に戻ります。変更がなければ書き込みません。
+認証付きの304がレート制限を消費するかは仕様に依存するため、同期完了のログ`snapshot_sync_completed`の
+`notModified`（304の件数）と`rateLimitRemaining`（直近の残量）で実際の消費を確認してください。
+
+### 手動実行
+
+GitHub Actionsの`Sync snapshots`ワークフロー（`workflow_dispatch`）が`POST /api/sync`を呼びます。
+認証は`REPORTS_TOKEN`のBearerで、リポジトリ変数`DEVPULSE_SITE_URL`が宛先です。
+応答は同期の結果で、`409`は別の同期が実行中、`503`はレート制限、`502`は一部のリポジトリの失敗です。
+このワークフローはデプロイを行わず、サイトの再ビルドも起動しません。
 
 GitHubリクエストにはWorkerシークレット`GITHUB_TOKEN`を使用します
 （[GitHubトークン](synchronization.md#githubトークン)を参照）。一時的な失敗時は各リポジトリの最後に成功した

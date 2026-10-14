@@ -3,7 +3,7 @@
 日本語 | [English](README.en.md)
 
 GitHubプロジェクトの進捗を可視化するRspressサイトです。Cloudflare Workersで
-マイルストーン、Issue、コミットを毎時同期し、日本語の日次AIレポートとRSSを公開します。
+マイルストーン、Issue、コミットを30分間隔（毎時07分・37分）で同期し、日本語の日次AIレポートとRSSを公開します。
 
 ## 開発を始める
 

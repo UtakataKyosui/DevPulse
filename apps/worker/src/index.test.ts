@@ -1,17 +1,23 @@
 import projects from '@devpulse/domain/fixtures/projects.sample.json';
 import snapshots from '@devpulse/domain/fixtures/snapshots.sample.json';
 import { describe, expect, it, vi } from 'vitest';
+import { ETAG_KEY } from './etag-cache.ts';
 import worker from './index.ts';
 import { type Env, SNAPSHOT_KEY, syncSnapshots } from './sync.ts';
-import { configKv } from './test-config.ts';
+import { acquireSyncLock } from './sync-lock.ts';
+import { configKv, database } from './test-config.ts';
 
 function storage(initial: unknown = null) {
-  let value = initial;
-  const get = vi.fn(async () => value);
-  const put = vi.fn(async (_key: string, json: string) => {
-    value = JSON.parse(json);
-  });
-  return { get, put, value: () => value };
+  const values = new Map<string, unknown>();
+  if (initial) values.set(SNAPSHOT_KEY, initial);
+  return {
+    get: vi.fn(async (key: string) => values.get(key) ?? null),
+    put: vi.fn(async (key: string, json: string) => {
+      values.set(key, JSON.parse(json));
+    }),
+    value: () => values.get(SNAPSHOT_KEY) ?? null,
+    cache: () => values.get(ETAG_KEY) ?? null,
+  };
 }
 
 describe('scheduled snapshot sync', () => {
@@ -260,5 +266,154 @@ describe('KV-backed project configuration', () => {
         (await worker.fetch(new Request(`https://example.com${path}`), env))
           .status,
       ).toBe(503);
+  });
+});
+
+describe('snapshot schema compatibility', () => {
+  const okFetcher = vi.fn(async (input: string | URL | Request) => {
+    const url = String(input);
+    if (url.includes('/milestones?') || url.includes('/issues?'))
+      return Response.json([]);
+    if (url.includes('/commits?')) return Response.json([]);
+    return Response.json({ private: false, visibility: 'public' });
+  });
+
+  it('writes schemaVersion and lastSuccessAt after a fully successful sync', async () => {
+    const kv = storage();
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await syncSnapshots(
+      { SNAPSHOTS: kv, CONFIG: configKv() } as unknown as Env,
+      okFetcher,
+      new Date('2026-10-13T01:00:00Z'),
+    );
+    expect(kv.value()).toMatchObject({
+      schemaVersion: 1,
+      lastSuccessAt: '2026-10-13T01:00:00.000Z',
+    });
+    log.mockRestore();
+  });
+
+  it('keeps the previous lastSuccessAt when a repository fails', async () => {
+    const kv = storage({
+      ...snapshots,
+      schemaVersion: 1,
+      lastSuccessAt: '2026-10-13T00:00:00.000Z',
+    });
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await syncSnapshots(
+      { SNAPSHOTS: kv, CONFIG: configKv() } as unknown as Env,
+      vi.fn(async () => new Response(null, { status: 503 })),
+      new Date(snapshots.snapshots[0]?.fetchedAt ?? '2026-10-13T00:00:00Z'),
+    );
+    expect((kv.value() as { lastSuccessAt: string }).lastSuccessAt).toBe(
+      '2026-10-13T00:00:00.000Z',
+    );
+    log.mockRestore();
+    error.mockRestore();
+  });
+
+  it('does not count a removed (404) repository as a failed sync', async () => {
+    const kv = storage({
+      ...snapshots,
+      schemaVersion: 1,
+      lastSuccessAt: '2026-10-13T00:00:00.000Z',
+    });
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await syncSnapshots(
+      { SNAPSHOTS: kv, CONFIG: configKv() } as unknown as Env,
+      vi.fn(async () => new Response(null, { status: 404 })),
+      new Date('2026-10-14T01:00:00Z'),
+    );
+    expect((kv.value() as { lastSuccessAt: string }).lastSuccessAt).toBe(
+      '2026-10-14T01:00:00.000Z',
+    );
+    log.mockRestore();
+    error.mockRestore();
+  });
+
+  it('reads a legacy value without the new fields and serves them from the API', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-14T00:00:00Z'));
+    try {
+      const env = {
+        SNAPSHOTS: storage(snapshots),
+        CONFIG: configKv(),
+      } as unknown as Env;
+      const body = (await (
+        await worker.fetch(
+          new Request('https://example.com/api/snapshots'),
+          env,
+        )
+      ).json()) as { schemaVersion: number; lastSuccessAt: string | null };
+      expect(body.schemaVersion).toBe(1);
+      expect(body.lastSuccessAt).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('POST /api/sync', () => {
+  const token = 's'.repeat(32);
+  const request = (init: RequestInit = {}) =>
+    new Request('https://example.com/api/sync', init);
+  const bearer = { Authorization: `Bearer ${token}` };
+
+  it('rejects missing or wrong credentials before touching GitHub', async () => {
+    const upstream = vi.fn();
+    vi.stubGlobal('fetch', upstream);
+    const env = { REPORTS_TOKEN: token } as unknown as Env;
+    for (const headers of [
+      {},
+      { Authorization: 'Bearer wrong' },
+    ] as HeadersInit[])
+      expect(
+        (await worker.fetch(request({ method: 'POST', headers }), env)).status,
+      ).toBe(401);
+    expect(upstream).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it('allows only POST', async () => {
+    const env = { REPORTS_TOKEN: token } as unknown as Env;
+    const response = await worker.fetch(request({ headers: bearer }), env);
+    expect(response.status).toBe(405);
+    expect(response.headers.get('Allow')).toBe('POST');
+  });
+
+  it('runs a sync and reports the result, with 409 while another runs', async () => {
+    const { db } = database();
+    const kv = storage();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: string | URL | Request) =>
+        String(input).includes('?')
+          ? Response.json([])
+          : Response.json({ private: false, visibility: 'public' }),
+      ),
+    );
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const env = {
+      REPORTS_TOKEN: token,
+      SNAPSHOTS: kv,
+      CONFIG: configKv(),
+      REPORTS: db,
+    } as unknown as Env;
+    const ok = await worker.fetch(
+      request({ method: 'POST', headers: bearer }),
+      env,
+    );
+    expect(ok.status).toBe(200);
+    expect(await ok.json()).toMatchObject({ status: 'completed', failures: 0 });
+    await acquireSyncLock(db, Date.now());
+    const busy = await worker.fetch(
+      request({ method: 'POST', headers: bearer }),
+      env,
+    );
+    expect(busy.status).toBe(409);
+    log.mockRestore();
+    vi.unstubAllGlobals();
   });
 });

@@ -59,7 +59,7 @@ export async function generateDailyReport(
   const lease = await store.claim(date, now.getTime());
   if (!lease) return (await store.get(date)) ? 'ready' : 'busy_or_exhausted';
   try {
-    // Refresh here as well: the independent hourly trigger may run before or after this one.
+    // Refresh here as well: the independent sync trigger may run before or after this one.
     if (synchronize) await syncSnapshots(env, fetch, now);
     const data = snapshotFileSchema.parse(
       await env.SNAPSHOTS.get(SNAPSHOT_KEY, 'json'),

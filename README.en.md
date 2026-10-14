@@ -3,7 +3,7 @@
 [日本語](README.md) | English
 
 An Rspress site for tracking GitHub project progress. Cloudflare Workers syncs
-milestones, issues, and commits hourly and publishes Japanese daily AI reports
+milestones, issues, and commits every 30 minutes (at :07 and :37) and publishes Japanese daily AI reports
 and an RSS feed.
 
 ## Get started

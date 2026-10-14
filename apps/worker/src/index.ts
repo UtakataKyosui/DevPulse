@@ -1,4 +1,7 @@
-import { snapshotFileSchema } from '@devpulse/domain/devpulse/schema';
+import {
+  SNAPSHOT_SCHEMA_VERSION,
+  snapshotFileSchema,
+} from '@devpulse/domain/devpulse/schema';
 import {
   previousReportDate,
   reportDateSchema,
@@ -60,6 +63,28 @@ export default {
       const denied = await adminGate(request, env);
       if (denied) return denied;
       return serveAdminPage(request);
+    }
+    if (path === '/api/sync') {
+      if (!(await reportsAuthorized(request, env.REPORTS_TOKEN)))
+        return new Response('Unauthorized', { status: 401 });
+      if (request.method !== 'POST')
+        return new Response('Method not allowed', {
+          status: 405,
+          headers: { Allow: 'POST' },
+        });
+      const result = await syncSnapshots(env, fetch);
+      const status =
+        result.status === 'busy'
+          ? 409
+          : result.status === 'rate_limited'
+            ? 503
+            : result.failures > 0
+              ? 502
+              : 200;
+      return Response.json(result, {
+        status,
+        headers: { 'Cache-Control': 'no-store' },
+      });
     }
     if (path.startsWith('/api/reports')) {
       if (!(await reportsAuthorized(request, env.REPORTS_TOKEN)))
@@ -148,6 +173,8 @@ export default {
         const projects = await readPublishedProjects(env.CONFIG);
         return Response.json(
           {
+            schemaVersion: SNAPSHOT_SCHEMA_VERSION,
+            lastSuccessAt: data.lastSuccessAt ?? null,
             snapshots: data.snapshots.filter(
               (s) =>
                 projects.some((p) => p.repository === s.repository) &&
@@ -227,10 +254,15 @@ export default {
       await generateDailyReport(env, now, previousReportDate(now), false);
     } else {
       // The daily trigger owns the 21:00 JST refresh to avoid duplicate GitHub requests.
-      if (now.getUTCHours() === 12) return;
+      if (now.getUTCHours() === 12 && now.getUTCMinutes() < 30) return;
       await syncSnapshots(env, fetch, now);
-      // Retry after 21:00 JST until the target JST day changes, bounded to three attempts.
-      if (now.getUTCHours() >= 12 && now.getUTCHours() < 15)
+      // Retry after 21:00 JST until the target JST day changes, once per hour at most
+      // so the twice-hourly trigger cannot spend the three-attempt budget early.
+      if (
+        now.getUTCMinutes() < 30 &&
+        now.getUTCHours() >= 12 &&
+        now.getUTCHours() < 15
+      )
         await generateDailyReport(env, now, previousReportDate(now), false);
     }
   },

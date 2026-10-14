@@ -38,6 +38,7 @@ export {
   projectSnapshotSchema,
   rawIssuesSchema,
   rawMilestonesSchema,
+  SNAPSHOT_SCHEMA_VERSION,
   snapshotFileSchema,
   storedProjectConfigSchema,
 } from '@devpulse/domain/devpulse/schema';
