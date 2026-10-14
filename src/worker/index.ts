@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { snapshotFileSchema } from '../lib/devpulse/schema.ts';
 import { previousReportDate, reportDateSchema } from '../lib/reports/model.ts';
+import { serveAdminPage } from './admin/page.ts';
 import { handleAdminApi } from './admin-api.ts';
 import { adminGate, isAdminPath } from './admin-auth.ts';
 import {
@@ -55,11 +56,7 @@ export default {
         return handleAdminApi(request, env);
       const denied = await adminGate(request, env);
       if (denied) return denied;
-      // The /admin page itself is implemented by a follow-up task.
-      return new Response('Not found', {
-        status: 404,
-        headers: { 'Cache-Control': 'no-store' },
-      });
+      return serveAdminPage(request);
     }
     if (path.startsWith('/api/reports')) {
       if (!(await reportsAuthorized(request, env.REPORTS_TOKEN)))
