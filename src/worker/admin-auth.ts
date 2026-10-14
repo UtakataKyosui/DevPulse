@@ -32,7 +32,7 @@ const payloadSchema = z.object({
   aud: z.union([z.string(), z.array(z.string())]),
   exp: z.number(),
   nbf: z.number().optional(),
-  iss: z.string().optional(),
+  iss: z.string(),
   email: z.string().optional(),
 });
 const jwksSchema = z.object({
@@ -145,8 +145,7 @@ export async function authorizeAdmin(
       return { ok: false, status: 401 };
     if (claims.nbf !== undefined && claims.nbf - CLOCK_SKEW_SECONDS > seconds)
       return { ok: false, status: 401 };
-    if (claims.iss !== undefined && claims.iss !== `https://${domain}`)
-      return { ok: false, status: 401 };
+    if (claims.iss !== `https://${domain}`) return { ok: false, status: 401 };
     const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
     if (!audiences.includes(aud)) return { ok: false, status: 403 };
     const email = claims.email?.toLowerCase();

@@ -134,6 +134,8 @@ describe('admin Cloudflare Access verification', () => {
     expect(
       await status(await sign({ ...valid, iss: 'https://evil.example' })),
     ).toBe(401);
+    const { iss: _iss, ...noIssuer } = valid;
+    expect(await status(await sign(noIssuer))).toBe(401);
   });
 
   it('fails closed when Access settings are missing', async () => {
