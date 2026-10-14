@@ -5,6 +5,7 @@ import {
   snapshotFileSchema,
 } from '../lib/devpulse/schema.ts';
 import { previousReportDate, reportDateSchema } from '../lib/reports/model.ts';
+import { adminGate, isAdminPath } from './admin-auth.ts';
 import { ReportStore } from './report-store.ts';
 import {
   canPublish,
@@ -21,8 +22,20 @@ const projects = projectConfigSchema
 const MAX_AGE = 48 * 60 * 60 * 1000;
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(
+    request: Request,
+    env: Env & DevPulseLocalEnv,
+  ): Promise<Response> {
     const path = new URL(request.url).pathname;
+    if (isAdminPath(path)) {
+      const denied = await adminGate(request, env);
+      if (denied) return denied;
+      // Real admin endpoints are implemented by follow-up tasks.
+      return new Response('Not found', {
+        status: 404,
+        headers: { 'Cache-Control': 'no-store' },
+      });
+    }
     if (path.startsWith('/api/reports')) {
       if (!(await reportsAuthorized(request, env.REPORTS_TOKEN)))
         return new Response('Unauthorized', { status: 401 });
