@@ -47,7 +47,7 @@ APIの権限名は、ダッシュボードの`Edit`が`Write`になる。
 2. `--dry-run`でリクエストを確認する。`policies`はこのアカウントだけを対象にする。
 
    ```bash
-   cf accounts tokens create --name devpulse-deploy --dry-run --policies '[{"effect":"allow","permission_groups":[{"id":"<id>"}],"resources":{"com.cloudflare.api.account.<account-id>":"*"}}]'
+   cf accounts tokens create --name devpulse-deploy --dry-run --policies '[{"effect":"allow","permission_groups":[{"id":"<scripts-id>"},{"id":"<kv-id>"},{"id":"<d1-id>"},{"id":"<ai-id>"}],"resources":{"com.cloudflare.api.account.<account-id>":"*"}}]'
    ```
 
 3. 承認後に`--dry-run`を外して実行する。レスポンスにトークンの値が含まれるため、端末に表示しない。

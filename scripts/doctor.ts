@@ -51,4 +51,10 @@ if (results.some((r) => r.status === 'unknown'))
   console.log(
     'UNKNOWN: 取得できませんでした。gh auth login と Wrangler の認証を確認してください。',
   );
-if (results.some((r) => r.status === 'missing')) process.exitCode = 1;
+if (
+  results.some(
+    (r) =>
+      r.item.required && (r.status === 'missing' || r.status === 'unknown'),
+  )
+)
+  process.exitCode = 1;
