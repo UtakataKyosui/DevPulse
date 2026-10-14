@@ -1,5 +1,10 @@
 [
   {
+    "text": "日次レポート",
+    "link": "/reports/",
+    "activeMatch": "/reports/"
+  },
+  {
     "text": "Guide",
     "link": "/guide/devpulse/data-model",
     "activeMatch": "/guide/"
