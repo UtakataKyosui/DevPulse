@@ -158,6 +158,9 @@ Wranglerのスコープ不足の警告が出た場合は`pnpm exec wrangler logi
    Workerに未登録だと、`cf deploy`は「required secrets have not been set」で失敗する。`pnpm run doctor`で先に確認する。
    `GITHUB_TOKEN`はfine-grained PATで、値は標準入力で`wrangler secret put GITHUB_TOKEN --name devpulse`に渡す。
    承認を得てから`cf deploy`を実行する。`CONFIG`のKV名前空間が作られる（シークレット不足で失敗しても、名前空間は作成済みになる）。
+   シークレット不足で失敗した後に再実行すると、`cf`が作成済みの名前空間を記憶しておらず、
+   「a namespace with this account ID and title already exists」で失敗する。`cf kv namespaces list`で
+   `devpulse-config`のIDを確認し、`cloudflare.config.ts`の`CONFIG: bindings.kv({ id: '<id>' })`に指定してから再実行する。
 5. `cf kv namespaces list`で`CONFIG`のIDを確認し、初期データを投入する。
 
    ```bash
