@@ -26,6 +26,7 @@ For static-only development, use `DEVPULSE_API_URL='' pnpm run dev`.
 
 ## Documentation
 
+- [First-time setup checklist](documentation/en/setup-checklist.md): tokens, secrets, authentication, and initial data setup
 - [UI components](documentation/en/ui.md): shadcn/ui and Tailwind CSS
 - [Deployment](documentation/en/deployment.md): initial and regular Cloudflare Workers deployments
 - [Admin authentication](documentation/en/authentication.md): Cloudflare Access setup and local development

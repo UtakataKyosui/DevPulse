@@ -25,6 +25,7 @@ pnpm run preview
 
 ## 詳細ドキュメント
 
+- [初回セットアップチェックリスト](documentation/ja/setup-checklist.md)：トークン、シークレット、認証、データ投入の設定順序
 - [UIコンポーネント](documentation/ja/ui.md)：shadcn/uiとTailwind CSS
 - [デプロイ](documentation/ja/deployment.md)：Cloudflare Workersへの初回・通常デプロイ
 - [管理者認証](documentation/ja/authentication.md)：Cloudflare Accessの設定とローカル開発
