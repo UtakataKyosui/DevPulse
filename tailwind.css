@@ -4,6 +4,13 @@
 @import "tailwindcss/utilities.css" layer(utilities);
 @custom-variant dark (&:where(.dark, .dark *));
 
+.rp-home-hero .rp-home-hero__content .rp-home-hero__subtitle {
+  margin-top: 1rem;
+  font-size: clamp(1.125rem, 2vw, 1.5rem);
+  font-weight: 500;
+  line-height: 1.6;
+}
+
 .rp-home-hero__image-img {
   border-radius: 50%;
 }
