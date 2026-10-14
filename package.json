@@ -12,6 +12,7 @@
     "deploy:check": "pnpm run build && cf deploy --dry-run",
     "format": "biome format --write",
     "preview": "rspress preview",
+    "config:seed": "node scripts/seed-config.ts",
     "reports:fetch": "node scripts/reports.ts fetch",
     "reports:ack": "node scripts/reports.ts ack",
     "reports:generate": "node scripts/reports.ts generate",
