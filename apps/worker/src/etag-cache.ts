@@ -3,7 +3,11 @@ import { z } from 'zod';
 /** ETag と、その応答から同期に必要な項目だけを残した本文。次回の 304 でこの本文を使う。 */
 export const ETAG_KEY = 'sync-etags:v1';
 
-const entrySchema = z.object({ etag: z.string().min(1), body: z.unknown() });
+const entrySchema = z.object({
+  etag: z.string().min(1),
+  // z.unknown() would let an entry without a body through; a 304 would then return undefined.
+  body: z.custom((value) => value !== undefined),
+});
 const fileSchema = z.record(z.string(), entrySchema);
 
 export class EtagCache {

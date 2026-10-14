@@ -247,6 +247,23 @@ describe('conditional requests', () => {
     log.mockRestore();
   });
 
+  it('drops a cache entry without a body instead of replaying it on 304', async () => {
+    const kv = storage();
+    await kv.put(
+      ETAG_KEY,
+      JSON.stringify({ 'o/r': { etag: '"o/r"' }, 'o/r/x': { etag: '"x"' } }),
+    );
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const calls: Headers[] = [];
+    await syncSnapshots(
+      { SNAPSHOTS: kv, CONFIG: config() } as unknown as Env,
+      etagFetcher(calls),
+      new Date('2026-10-13T01:00:00Z'),
+    );
+    expect(calls.every((h) => h.get('If-None-Match') === null)).toBe(true);
+    log.mockRestore();
+  });
+
   it('does not rewrite an unchanged cache', async () => {
     const kv = storage();
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
