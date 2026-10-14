@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import worker from '../index.ts';
 import type { Env } from '../sync.ts';
-import { CLIENT_SCRIPT } from './client-script.ts';
 
 const PAGES = ['/admin', '/admin/', '/admin/index.html'];
 const ASSETS = ['/admin/app.js', '/admin/app.css'];
@@ -38,8 +37,14 @@ describe('admin page serving', () => {
     expect(response.headers.get('Content-Type')).toContain('text/html');
     const html = await response.text();
     expect(html).toContain('/admin/app.js');
-    expect(html).toContain('即時反映');
-    expect(html).toContain('次回ビルドで反映');
+    expect(html).toContain('/admin/app.css');
+    expect(html).toContain('id="root"');
+  });
+
+  it('keeps style-src strict without inline allowances', async () => {
+    const csp = (await get('/admin')).headers.get('Content-Security-Policy');
+    expect(csp).toContain("style-src 'self';");
+    expect(csp).not.toMatch(/unsafe-inline|nonce-/);
   });
 
   it.each([...PAGES, ...ASSETS])(
@@ -80,16 +85,5 @@ describe('admin page serving', () => {
       env(),
     );
     expect(post.status).toBe(405);
-  });
-});
-
-describe('admin client script', () => {
-  it('is syntactically valid', () => {
-    expect(() => new Function(CLIENT_SCRIPT)).not.toThrow();
-  });
-
-  it('never writes markup into the DOM', () => {
-    expect(CLIENT_SCRIPT).not.toMatch(/innerHTML|outerHTML|insertAdjacentHTML/);
-    expect(CLIENT_SCRIPT).not.toMatch(/document\.write|\beval\(/);
   });
 });

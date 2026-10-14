@@ -1,15 +1,9 @@
-import { Progress as ProgressPrimitive } from 'radix-ui';
-import type * as React from 'react';
+import { Progress as ProgressPrimitive } from '@base-ui/react/progress';
 import { cn } from '@/lib/utils';
 
-function Progress({
-  className,
-  value,
-  ...props
-}: React.ComponentProps<typeof ProgressPrimitive.Root>) {
+function Progress({ className, ...props }: ProgressPrimitive.Root.Props) {
   return (
     <ProgressPrimitive.Root
-      value={value}
       data-slot="progress"
       className={cn(
         'relative h-2 w-full overflow-hidden rounded-full bg-muted',
@@ -17,11 +11,12 @@ function Progress({
       )}
       {...props}
     >
-      <ProgressPrimitive.Indicator
-        data-slot="progress-indicator"
-        className="h-full w-full flex-1 bg-primary transition-all"
-        style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
-      />
+      <ProgressPrimitive.Track className="h-full w-full">
+        <ProgressPrimitive.Indicator
+          data-slot="progress-indicator"
+          className="h-full bg-primary transition-all data-indeterminate:w-0"
+        />
+      </ProgressPrimitive.Track>
     </ProgressPrimitive.Root>
   );
 }
