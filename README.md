@@ -1,92 +1,89 @@
-# Rspress website
+# DevPulse
+
+日本語 | [English](README.en.md)
 
 ## shadcn/ui
 
-Tailwind CSS v4 is integrated through the Rsbuild plugin. `components.json`
-configures shadcn/ui primitives in `src/components/ui/`. Dashboard cards, badges,
-progress indicators and notices use these components. Project details use Table
-for milestones and recent closures, and Chart (Recharts) for daily Issue closures.
-Import them using `@/components/ui/button` or `@/components/ui/badge` in TSX/MDX.
-Add more components with:
+Tailwind CSS v4をRsbuildプラグイン経由で統合しています。`components.json`で
+shadcn/uiの基本コンポーネントの配置先を`src/components/ui/`に設定しています。
+ダッシュボードのカード、バッジ、進捗表示、通知にこれらのコンポーネントを使っています。
+プロジェクト詳細では、マイルストーンと最近クローズしたIssueにTable、日別のIssueクローズ数に
+Chart（Recharts）を使っています。TSX/MDXでは`@/components/ui/button`や
+`@/components/ui/badge`からインポートしてください。コンポーネントは次のコマンドで追加できます。
 
 ```bash
 pnpm dlx shadcn@latest add card
 ```
 
-`tailwind.css` maps colors to Rspress theme variables and follows its `.dark`
-class. Tailwind Preflight is omitted to preserve the documentation theme.
+`tailwind.css`は色をRspressのテーマ変数に対応付け、`.dark`クラスに従います。
+ドキュメントのテーマを維持するため、Tailwind Preflightは読み込んでいません。
 
-## Deploy to Cloudflare Workers
+## Cloudflare Workersへのデプロイ
 
-Use Node.js 22.18 or later and pnpm. Install dependencies with
-`pnpm install --frozen-lockfile`, then sign in and deploy:
+Node.js 22.18以降とpnpmを使用してください。`pnpm install --frozen-lockfile`で
+依存関係をインストールし、ログインしてデプロイします。
 
 ```bash
 cf auth login
-pnpm run deploy:bootstrap # first deployment only; see daily report setup below
+pnpm run deploy:bootstrap # 初回デプロイのみ。後述の日次レポートの設定を参照
 ```
 
-`pnpm run deploy` restores saved reports, builds Rspress into `doc_build/`,
-and deploys it with `cf`. It requires `DEVPULSE_SITE_URL` and `REPORTS_TOKEN`.
-Use `deploy:bootstrap` only for the first deployment before the report API exists.
-To validate without uploading, run `pnpm run deploy:check`.
-The Worker name is `devpulse` in `cloudflare.config.ts`.
+`pnpm run deploy`は保存済みレポートを復元し、Rspressを`doc_build/`にビルドして、
+`cf`でデプロイします。`DEVPULSE_SITE_URL`と`REPORTS_TOKEN`が必要です。
+レポートAPIがまだ存在しない初回デプロイに限り、`deploy:bootstrap`を使用してください。
+アップロードせずに検証するには`pnpm run deploy:check`を実行します。
+Worker名は`cloudflare.config.ts`の`devpulse`です。
 
-The static assets build uses Wrangler internally through `cf`; the deployment
-command remains `cf deploy`. Keep `wrangler.config.ts` alongside the Cloudflare
-configuration, as it specifies the assets directory. No `cf init` is needed
-once these configuration files exist.
+静的アセットのビルドでは`cf`が内部でWranglerを使用しますが、デプロイコマンドは
+`cf deploy`です。`wrangler.config.ts`にはアセットのディレクトリを指定しているため、
+Cloudflare設定とともに維持してください。これらの設定ファイルがあれば`cf init`は不要です。
 
-## Admin authentication (Cloudflare Access)
+## 管理者認証（Cloudflare Access）
 
-`/admin*` and `/api/admin/*` are protected twice: by a Cloudflare Access
-Application and by Worker-side verification (`src/worker/admin-auth.ts`). The
-Worker validates `Cf-Access-Jwt-Assertion` (RS256 signature against the team
-JWKS at `https://<team>.cloudflareaccess.com/cdn-cgi/access/certs`, `aud`, `exp`,
-`nbf`, `iss`) and then checks the `email` claim against an allow list. This is
-independent of `REPORTS_TOKEN`; the CI bearer token never grants admin access.
-Responses: no/invalid/expired token 401, `aud` mismatch or email not allowed 403,
-missing Access settings 503 (fail closed).
+`/admin*`と`/api/admin/*`はCloudflare Access ApplicationとWorker側の検証
+（`src/worker/admin-auth.ts`）で二重に保護しています。Workerは
+`Cf-Access-Jwt-Assertion`を検証します（チームのJWKS
+`https://<team>.cloudflareaccess.com/cdn-cgi/access/certs`によるRS256署名、
+`aud`、`exp`、`nbf`、`iss`）。その後、`email`クレームを許可リストと照合します。
+これは`REPORTS_TOKEN`とは独立しており、CIのBearerトークンで管理者アクセスはできません。
+トークンなし・不正・期限切れは401、`aud`の不一致・メールアドレスが許可されていない場合は403、
+Access設定が不足している場合は503を返し、アクセスを拒否します。
 
-Worker secrets (set in the dashboard, not in shell arguments):
+Workerのシークレットはダッシュボードで設定し、シェル引数には指定しないでください。
 
-| Name | Value |
+| 名前 | 値 |
 |---|---|
-| `ACCESS_TEAM_DOMAIN` | Team domain such as `<team>.cloudflareaccess.com` |
-| `ACCESS_AUD` | Application Audience (AUD) tag of the Access Application |
-| `ADMIN_ALLOWED_EMAILS` | Comma-separated allowed emails (one for this project) |
+| `ACCESS_TEAM_DOMAIN` | `<team>.cloudflareaccess.com`などのチームドメイン |
+| `ACCESS_AUD` | Access ApplicationのApplication Audience（AUD）タグ |
+| `ADMIN_ALLOWED_EMAILS` | 許可するメールアドレスのカンマ区切りリスト（このプロジェクトでは1件） |
 
-### Access setup
+### Accessの設定
 
-1. Zero Trust > Access > Applications > add a self-hosted application with the
-   public hostnames/paths `/admin*` and `/api/admin/*` on the production domain.
-2. Add GitHub as the login method and a policy that allows only the owner's email.
-3. Copy the Application's AUD tag and the team domain into the secrets above.
-4. Pricing and seats: Cloudflare Zero Trust has had a free plan for a small
-   number of users (50 at last check), but the current limits and prices
-   must be confirmed in the Cloudflare dashboard. **要確認**.
+1. Zero Trust > Access > Applicationsで、セルフホスト型アプリケーションを追加し、本番ドメインの公開ホスト名・パスとして`/admin*`と`/api/admin/*`を設定します。
+2. ログイン方法にGitHubを追加し、所有者のメールアドレスだけを許可するポリシーを設定します。
+3. ApplicationのAUDタグとチームドメインを上記のシークレットに設定します。
+4. 料金とユーザー数：Cloudflare Zero Trustには少人数向けの無料プランがあります（前回確認時は50人）。現在の上限と料金はCloudflareダッシュボードで確認してください。**要確認**。
 
-### Disable `workers.dev` and preview URLs
+### `workers.dev`とプレビューURLの無効化
 
-Access only guards the hostname it is attached to, so the unprotected
-`workers.dev` and preview URLs must be turned off: Workers & Pages > devpulse >
-Settings > Domains & Routes, disable **workers.dev** and **Preview URLs**
-(or put those hostnames behind the same Access Application). Note the Worker
-also rejects requests without a valid JWT, but Access should still be the first line.
+Accessは紐付けたホスト名だけを保護するため、保護されていない`workers.dev`と
+プレビューURLを無効化する必要があります。Workers & Pages > devpulse > Settings >
+Domains & Routesで**workers.dev**と**Preview URLs**を無効にしてください
+（または、これらのホスト名も同じAccess Applicationで保護してください）。
+Workerも有効なJWTのないリクエストを拒否しますが、Accessを最初の防御層にしてください。
 
-### Local development bypass and production
+### ローカル開発時の認証バイパスと本番環境
 
-For local development only, create `.dev.vars` (never commit) with
-`ADMIN_AUTH_BYPASS=1`. The bypass is honored only when the variable is exactly
-`1` **and** the request host is `localhost`, `127.0.0.1` or `[::1]`. It is not
-declared in `cloudflare.config.ts`, so it does not exist in the deployed
-Worker; and even if it were set there, requests on real hostnames
-still require a valid Access JWT. Do not set it in production.
+ローカル開発に限り、`.dev.vars`（コミット禁止）を作成し、`ADMIN_AUTH_BYPASS=1`を設定します。
+バイパスが有効になるのは、変数が厳密に`1`で、リクエストのホストが`localhost`、
+`127.0.0.1`、`[::1]`のいずれかの場合だけです。`cloudflare.config.ts`には宣言していないため、
+デプロイ済みWorkerには存在しません。仮に設定しても、実際のホスト名へのリクエストには
+有効なAccess JWTが必要です。本番環境では設定しないでください。
 
-### Verify that unauthenticated access is blocked
+### 未認証アクセスが拒否されることの確認
 
-Run these against the production domain and the `workers.dev` hostname; every
-request must return 302 to the Access login (from Access) or 401/403, never 200/404 from the app:
+本番ドメインと`workers.dev`のホスト名に対して次を実行してください。すべてのリクエストが
+Accessログインへの302（Accessが返すもの）または401/403になり、アプリから200/404が返らないことを確認します。
 
 ```bash
 for host in https://<production-host> https://devpulse.<subdomain>.workers.dev; do
@@ -96,339 +93,293 @@ for host in https://<production-host> https://devpulse.<subdomain>.workers.dev; 
 done
 ```
 
-Also confirm a forged header does not help: `curl -H 'Cf-Access-Jwt-Assertion: x.y.z'`
-must return 401. Automated cases (missing, bad signature, wrong `aud`, expired,
-disallowed email) run in `pnpm test` (`src/worker/admin-auth.test.ts`).
-Live checks against Cloudflare were not performed as part of the code change.
+偽造ヘッダーでも認証を通過できないことを確認してください。
+`curl -H 'Cf-Access-Jwt-Assertion: x.y.z'`は401を返す必要があります。
+トークンなし、不正な署名、誤った`aud`、期限切れ、許可されていないメールアドレスの自動テストは
+`pnpm test`（`src/worker/admin-auth.test.ts`）で実行します。
+コード変更時にはCloudflareに対する実環境での確認は実施していません。
 
-## Project configuration store
+## プロジェクト設定ストア
 
-The project list is stored as one JSON document at key `config:projects:v1` in
-the `CONFIG` Workers KV namespace: `{ revision, updatedAt, updatedBy, projects }`.
-It is a separate namespace from `SNAPSHOTS` because the hourly sync overwrites
-`SNAPSHOTS` wholesale, while `CONFIG` holds hand-edited data that needs its own
-lifecycle (backup, access scoping, listing). `src/worker/config-store.ts` reads
-and writes it. A missing or invalid value is an error; there is no fallback to
-a repository file. Writes validate with `projectConfigSchema` (duplicate id, slug
-and repository are rejected) and are refused when the revision re-read just
-before the write differs from the caller's expected revision. KV has no
-compare-and-swap, so two writes racing between that re-read and the put are not
-detected; this relies on a single administrator.
+プロジェクト一覧は`CONFIG` Workers KV名前空間のキー`config:projects:v1`に、
+単一のJSONドキュメント`{ revision, updatedAt, updatedBy, projects }`として保存します。
+毎時の同期で全体を上書きする`SNAPSHOTS`とは別の名前空間です。
+`CONFIG`は手動で編集するデータを保持し、独立した管理（バックアップ、アクセス範囲、一覧取得）が必要です。
+読み書きは`src/worker/config-store.ts`が行います。値が存在しない、または不正な場合はエラーとなり、
+リポジトリ内のファイルにはフォールバックしません。書き込み時には`projectConfigSchema`で検証し、
+id・slug・リポジトリの重複を拒否します。書き込み直前に再取得したリビジョンが呼び出し元の
+期待するリビジョンと異なる場合も拒否します。KVにはcompare-and-swapがないため、
+再取得から保存までの間に競合した2件の書き込みは検出できません。管理者が1人であることを前提としています。
 
-Seed the initial 8 projects once, with revision 1 (it refuses to overwrite an
-existing value). The input is `scripts/projects.seed.json`, a snapshot of the
-production list taken when the file-based config was retired; it is only read by
-the seed script, while tests and fixture builds use
-`src/data/devpulse/projects.sample.json`. Pass `--source <file>` to seed
-something else.
+初期の8プロジェクトをリビジョン1として一度だけ投入します（既存の値の上書きは拒否します）。
+入力は`scripts/projects.seed.json`です。ファイルベースの設定を廃止した時点の本番一覧の
+スナップショットで、初期投入スクリプトだけが読み込みます。テストとフィクスチャを使うビルドでは
+`src/data/devpulse/projects.sample.json`を使用します。別の入力を使う場合は`--source <file>`を指定してください。
 
 ```bash
-pnpm run config:seed                                            # local cf dev KV
+pnpm run config:seed                                            # ローカルのcf dev KV
 pnpm run config:seed -- --remote --namespace-id <CONFIG namespace id>
 ```
 
-The local seed writes under `.wrangler/state` using the binding name as the
-namespace id. Find the production id in the Cloudflare dashboard after
-`cf deploy` provisions `CONFIG`.
+ローカルの初期投入は、バインディング名を名前空間IDとして`.wrangler/state`配下に書き込みます。
+本番のIDは`cf deploy`が`CONFIG`を作成した後、Cloudflareダッシュボードで確認してください。
 
-### History and rollback
+### 履歴とロールバック
 
-Every write moves the document it replaces into `config:projects:history:v1`
-(same namespace), a JSON array newest first, capped at the 20 most recent
-replaced revisions; the current revision lives only in `config:projects:v1`.
-The seed has nothing to replace and does not touch the history key. History is
-written before the config, so a failed config put never loses a revision (a
-retry does not duplicate it); the no-CAS race described above applies to both
-keys. The admin page lists the history, shows the diff against the current
-config and the `projectConfigSchema` result, and restores a revision as a new
-revision (see [Admin API](#admin-api)). Older revisions are gone; use
-`wrangler kv key get config:projects:v1` for an off-site backup if needed.
+書き込みのたびに、置き換えるドキュメントを同じ名前空間の`config:projects:history:v1`に保存します。
+履歴は新しい順のJSON配列で、置き換えられた直近20リビジョンを保持します。
+現在のリビジョンは`config:projects:v1`にだけ存在します。初期投入では置き換えるデータがないため、
+履歴キーには触れません。履歴は設定より先に書き込むため、設定の保存に失敗してもリビジョンは失われず、
+再試行でも重複しません。上記のCASがないことによる競合は両方のキーに適用されます。
+管理画面では履歴、現在の設定との差分、`projectConfigSchema`の検証結果を表示し、
+過去のリビジョンを新しいリビジョンとして復元できます（[管理者API](#管理者api)を参照）。
+古いリビジョンは削除されます。必要なら`wrangler kv key get config:projects:v1`で外部にバックアップしてください。
 
-A history value that is not valid JSON or not that array makes both the
-history endpoints and config writes fail (503) rather than silently dropping
-it. To reset, delete the key:
-`pnpm exec wrangler kv key delete config:projects:history:v1 --namespace-id <id> --remote`.
+履歴の値が有効なJSONでない、または所定の配列でない場合、黙って破棄せず、
+履歴エンドポイントと設定の書き込みの両方が503で失敗します。リセットするにはキーを削除します。
+`pnpm exec wrangler kv key delete config:projects:history:v1 --namespace-id <id> --remote`
 
-### Propagation delay
+### 反映の遅延
 
-Per the [Workers KV documentation](https://developers.cloudflare.com/kv/concepts/how-kv-works/),
-a write is visible immediately (usually) only in the location where it was made.
-Other locations serve cached values and see the change "up to 60 seconds or
-more" later; the default `cacheTtl` is 60 seconds. Negative lookups (key not
-found) are cached the same way, and locations that read the key recently take
-longer. The documentation gives no upper bound beyond "or more", so the exact
-maximum is **要確認**; plan for roughly one minute plus an unquantified margin.
+[Workers KVのドキュメント](https://developers.cloudflare.com/kv/concepts/how-kv-works/)によると、
+書き込みは通常、書き込んだ場所でのみ即座に参照できます。他の場所ではキャッシュされた値が返され、
+変更が見えるまで最大60秒、またはそれ以上かかります。デフォルトの`cacheTtl`は60秒です。
+キーが見つからない結果も同様にキャッシュされ、最近そのキーを読んだ場所ほど反映に時間がかかります。
+ドキュメントには「それ以上」の上限が示されていないため、正確な最大値は**要確認**です。
+約1分に、数値化できない余裕を加えて計画してください。
 
-Effective delay by consumer, once they read from `CONFIG`: Worker reads (sync
-Cron, `/api/*`) see a change after the KV delay above; the sidebar and detail
-pages also wait for the next hourly build (`15 * * * *`) to fetch the config,
-so up to about one hour plus the KV delay and build time.
+`CONFIG`を読み込む各利用先の遅延は次のとおりです。Worker（同期Cron、`/api/*`）は上記のKV遅延後に
+変更を参照します。サイドバーと詳細ページは、次の毎時ビルド（`15 * * * *`）で設定を取得するまで待つため、
+最大で約1時間にKV遅延とビルド時間が加わります。
 
-### Build-time sidebar and detail pages
+### ビルド時のサイドバーと詳細ページ
 
-`pnpm run projects:fetch` reads `GET /api/projects` from `DEVPULSE_SITE_URL`
-(public, no token) into `.projects-cache/config.json`. `rspress.config.ts`
-then writes `docs/projects/_meta.json`, generates
-`docs/projects/<slug>/index.mdx` from a template for published slugs without a
-hand-written MDX (generated files carry a marker and are git-ignored), and
-excludes the hand-written MDX of unpublished or removed slugs. Without a
-fetched config the build exits non-zero; it never falls back to a fixture. To
-use one locally or in a PR check, set it explicitly:
+`pnpm run projects:fetch`は`DEVPULSE_SITE_URL`の`GET /api/projects`
+（公開API、トークン不要）から設定を取得し、`.projects-cache/config.json`に保存します。
+`rspress.config.ts`は`docs/projects/_meta.json`を書き込み、手書きのMDXがない公開slugについて
+テンプレートから`docs/projects/<slug>/index.mdx`を生成します（生成ファイルにはマーカーが付き、Gitの追跡対象外です）。
+非公開または削除済みslugの手書きMDXは除外します。取得済み設定がなければビルドは非ゼロで終了し、
+フィクスチャにはフォールバックしません。ローカルやPRのチェックで使う場合は明示的に指定してください。
 
 ```sh
 DEVPULSE_PROJECTS_FIXTURE=src/data/devpulse/projects.sample.json pnpm run build
 ```
 
-`reports.yml` runs the fetch before the build, so a failed fetch stops the
-deploy. `deploy:bootstrap` and `deploy:check` need the fetch or the fixture
-variable as well. `docs/projects/_meta.json` is rewritten on every build; do
-not commit the fixture's version.
+`reports.yml`はビルド前に設定を取得するため、取得失敗時はデプロイを停止します。
+`deploy:bootstrap`と`deploy:check`でも設定の取得、またはフィクスチャ変数が必要です。
+`docs/projects/_meta.json`はビルドのたびに書き換わります。フィクスチャの内容はコミットしないでください。
 
-### Adding a project
+### プロジェクトの追加
 
-1. Open `/admin` (behind Cloudflare Access), pick the repository from the
-   candidates list, set its name, `tier` and `published`, and save.
-2. The API and Home reflect it after the KV delay below. The sidebar and
-   `/projects/<slug>/` page appear on the next hourly build (`15 * * * *`), or
-   run the **Publish daily reports** workflow manually. A detail page is
-   generated automatically; add `docs/projects/<slug>/index.mdx` only to
-   hand-write one.
+1. Cloudflare Accessで保護された`/admin`を開き、候補一覧からリポジトリを選んで、名前、`tier`、`published`を設定して保存します。
+2. APIとホームにはKVの反映遅延後に表示されます。サイドバーと`/projects/<slug>/`ページは次の毎時ビルド（`15 * * * *`）で表示されます。すぐにビルドするには**Publish daily reports**ワークフローを手動実行してください。詳細ページは自動生成されます。手書きする場合だけ`docs/projects/<slug>/index.mdx`を追加します。
 
-### Production migration
+### 本番環境の移行
 
-Do these in order (not performed by the code change; each needs production access):
+次の順番で実行してください（コード変更時には未実施です。各手順には本番環境へのアクセスが必要です）。
 
-1. Deploy the Worker that reads `CONFIG` (`cf deploy` provisions the
-   namespace) and note the namespace id in the dashboard.
-2. Seed: `pnpm run config:seed -- --remote --namespace-id <id>`.
-3. Confirm `GET /api/projects` returns the 8 projects, then run the
-   **Publish daily reports** workflow so the build fetches them.
-4. Check that Home, the sidebar and the detail pages look the same as before,
-   and that a change on `/admin` shows up in the API and Home immediately and in
-   the sidebar and detail pages after the next build.
+1. `CONFIG`を読み込むWorkerをデプロイし（`cf deploy`で名前空間を作成）、ダッシュボードで名前空間IDを確認します。
+2. `pnpm run config:seed -- --remote --namespace-id <id>`で初期データを投入します。
+3. `GET /api/projects`が8プロジェクトを返すことを確認し、**Publish daily reports**ワークフローを実行してビルド時に取得します。
+4. ホーム、サイドバー、詳細ページが移行前と同じ表示であることを確認します。`/admin`での変更がAPIとホームに即座に反映され、次のビルド後にサイドバーと詳細ページに反映されることも確認します。
 
-### Local admin with `cf dev`
+### `cf dev`でのローカル管理画面
 
-`cf dev` does not pick up `ADMIN_AUTH_BYPASS` from `.dev.vars`. Run the Worker
-with `pnpm exec wrangler dev --var ADMIN_AUTH_BYPASS:1` (after
-`pnpm run config:seed`) and open `http://localhost:8787/admin`.
+`cf dev`は`.dev.vars`の`ADMIN_AUTH_BYPASS`を読み込みません。
+`pnpm run config:seed`の後、`pnpm exec wrangler dev --var ADMIN_AUTH_BYPASS:1`で
+Workerを起動し、`http://localhost:8787/admin`を開いてください。
 
-## Admin API
+## 管理者API
 
-All endpoints sit behind the Access gate (`src/worker/admin-api.ts`) and return
-`Cache-Control: no-store`. `POST` / `PUT` / `DELETE` additionally require an
-`Origin` header equal to the request origin.
+すべてのエンドポイントはAccessによる認証（`src/worker/admin-api.ts`）で保護され、
+`Cache-Control: no-store`を返します。`POST` / `PUT` / `DELETE`では、
+リクエスト元のオリジンと一致する`Origin`ヘッダーも必要です。
 
-| Endpoint | Behavior |
+| エンドポイント | 動作 |
 |---|---|
-| `GET /api/admin/config` | Current `{ revision, updatedAt, updatedBy, projects }` |
-| `PUT /api/admin/config` | Body `{ revision, projects }`. 409 when `revision` is stale; 422 with `errors: [{ path, message }]` for schema errors, slug changes, and repositories that are not public |
-| `GET /api/admin/candidates` | Public repositories of the fixed owner that are not registered yet, each with `defaults` (`published: false`, `tier: low`) |
-| `GET /api/admin/history` | `{ revision, limit, entries: [{ revision, updatedAt, updatedBy, projectCount }] }` for the retained replaced revisions, newest first |
-| `GET /api/admin/history/<revision>` | That revision's stored document plus `errors` from `projectConfigSchema` and the slug rule against the current config. 404 when no longer retained |
-| `POST /api/admin/history/<revision>/restore` | Body `{ revision }` = the **current** revision. Saves that revision's projects as a new revision with the same checks as `PUT` (409 stale, 422 invalid or not public, 404 not retained) |
+| `GET /api/admin/config` | 現在の`{ revision, updatedAt, updatedBy, projects }`を返す |
+| `PUT /api/admin/config` | 本文は`{ revision, projects }`。古い`revision`は409。スキーマエラー、slug変更、非公開リポジトリは422と`errors: [{ path, message }]`を返す |
+| `GET /api/admin/candidates` | 固定の所有者の未登録の公開リポジトリを返す。各候補に`defaults`（`published: false`、`tier: low`）を含む |
+| `GET /api/admin/history` | 保持している置き換え済みリビジョンを新しい順で`{ revision, limit, entries: [{ revision, updatedAt, updatedBy, projectCount }] }`として返す |
+| `GET /api/admin/history/<revision>` | 指定リビジョンの保存済みドキュメントに、`projectConfigSchema`と現在の設定に対するslugルールの`errors`を加えて返す。保持されていなければ404 |
+| `POST /api/admin/history/<revision>/restore` | 本文の`{ revision }`には**現在の**リビジョンを指定。指定した過去のリビジョンのプロジェクトを新しいリビジョンとして保存する。`PUT`と同じ検証を行う（古い場合409、不正または非公開なら422、保持されていなければ404） |
 
-The owner is `ADMIN_SETTINGS.githubOwner` in `cloudflare.config.ts`. On save,
-repositories that are newly added or newly published are checked against the
-GitHub API with `GITHUB_TOKEN`; newly added ones must belong to that owner.
-Restores go through the same check, so a revision that re-publishes a
-repository which has since gone private is rejected.
+所有者は`cloudflare.config.ts`の`ADMIN_SETTINGS.githubOwner`で設定します。
+保存時には、新規追加または新たに公開するリポジトリを`GITHUB_TOKEN`を使ってGitHub APIで確認します。
+新規追加するリポジトリは、その所有者に属している必要があります。復元時も同じ検証を行うため、
+その後非公開になったリポジトリを再公開するリビジョンは拒否されます。
 
-## Progress synchronization
+## 進捗の同期
 
-The `published` projects in the KV config (`config:projects:v1`) define the repositories. The Worker
-reads it on every run, fetches their public GitHub milestones, closed issues and latest commits every
-hour (`0 * * * *`, UTC), then writes normalized snapshots to Workers KV.
-`GET /api/snapshots` and `GET /api/projects` (tier order) read the config per request. A missing config stops the sync with an error and yields 503, never a fixture. Reports use the config at generation time; past reports are unchanged.
-`cf deploy` provisions the `SNAPSHOTS` namespace and installs the Cron Trigger.
+KV設定（`config:projects:v1`）の`published`なプロジェクトが同期対象のリポジトリを定義します。
+Workerは実行のたびに設定を読み込み、毎時（`0 * * * *`、UTC）、公開GitHubマイルストーン、
+クローズしたIssue、最新コミットを取得し、正規化したスナップショットをWorkers KVに書き込みます。
+`GET /api/snapshots`と`GET /api/projects`（tier順）はリクエストごとに設定を読み込みます。
+設定がなければ同期はエラーで停止し、APIは503を返します。フィクスチャは使用しません。
+レポートは生成時の設定を使い、過去のレポートは変更しません。
+`cf deploy`が`SNAPSHOTS`名前空間を作成し、Cron Triggerを設定します。
 
-GitHub requests are authenticated with the Worker secret `GITHUB_TOKEN` (see
-[GitHub token](#github-token)). Transient
-failures retain each repository's last successful snapshot for up to 48 hours;
-404/private repositories are removed. Check Worker logs for synchronization failures
-or rate limits. `snapshots.json` is the build-time fallback, not the live store.
+GitHubリクエストにはWorkerシークレット`GITHUB_TOKEN`を使用します
+（[GitHubトークン](#githubトークン)を参照）。一時的な失敗時は各リポジトリの最後に成功した
+スナップショットを最大48時間保持します。404や非公開のリポジトリは削除します。
+同期失敗やレート制限はWorkerログで確認してください。
+`snapshots.json`はビルド時のフォールバックであり、ライブデータの保存先ではありません。
 
-To test locally, run `pnpm run build`, `pnpm exec cf dev`, then:
+ローカルで試すには`pnpm run build`、`pnpm exec cf dev`を実行してから次を実行します。
 
 ```bash
 curl http://localhost:8787/cdn-cgi/local/scheduled
 curl http://localhost:8787/api/snapshots
 ```
 
-The API returns 503 until the first successful sync. For static-only Rspress
-development, set `DEVPULSE_API_URL=''` when running `pnpm dev`.
+最初の同期が成功するまでAPIは503を返します。静的なRspressのみで開発する場合は、
+`pnpm dev`の実行時に`DEVPULSE_API_URL=''`を設定してください。
 
-## Daily AI reports and RSS
+## 日次AIレポートとRSS
 
-The Worker generates a Japanese report at **21:00 JST** (`0 12 * * *`, UTC)
-for the previous JST calendar day. Issue closure counts exclude PRs and use
-the half-open interval 00:00–next-day 00:00. Milestone progress, health and
-deadlines describe the capture time, rather than historical day-end state.
-Only a consecutive capture of the same Milestone produces a progress delta.
-Failed refreshes use explicitly marked older data for at most 48 hours;
-missing data and first captures have unknown deltas.
+Workerは**21:00 JST**（`0 12 * * *`、UTC）に、JSTでの前日分の日本語レポートを生成します。
+Issueのクローズ数はPRを除外し、00:00以上、翌日00:00未満の半開区間で集計します。
+マイルストーンの進捗、健全性、期限は、過去の日末時点ではなくデータ取得時点の状態を示します。
+同じマイルストーンを連続して取得した場合だけ進捗差分を算出します。
+更新失敗時は最大48時間前までのデータを、古いデータであることを明示して使用します。
+データがない場合や初回取得時は差分を不明とします。
 
-Workers AI writes a plain-text summary; deterministic counts and source links
-are displayed separately. The default model is
-`@cf/meta/llama-3.3-70b-instruct-fp8-fast`. Edit `REPORT_SETTINGS` in
-`cloudflare.config.ts` to select that model or
-`@cf/meta/llama-3.1-8b-instruct`, and adjust `maxTokens` (100–2000) or
-`maxInputChars` (1000–24000). Prompt changes require a new prompt version in
-the report generator/schema. Validate Japanese output and current Workers AI
-pricing/availability before enabling production inference:
-[model documentation](https://developers.cloudflare.com/workers-ai/models/llama-3.3-70b-instruct-fp8-fast/).
+Workers AIはプレーンテキストの要約を作成し、確定的な集計値とソースリンクは別に表示します。
+デフォルトモデルは`@cf/meta/llama-3.3-70b-instruct-fp8-fast`です。
+`cloudflare.config.ts`の`REPORT_SETTINGS`でこのモデル、または
+`@cf/meta/llama-3.1-8b-instruct`を選択し、`maxTokens`（100〜2000）や
+`maxInputChars`（1000〜24000）を調整できます。プロンプトを変更する場合は、
+レポート生成処理・スキーマのプロンプトバージョンを更新する必要があります。
+本番の推論を有効にする前に、日本語出力とWorkers AIの現在の料金・利用可否を確認してください。
+[モデルのドキュメント](https://developers.cloudflare.com/workers-ai/models/llama-3.3-70b-instruct-fp8-fast/)
 
-`REPORTS` is a D1 database provisioned by `cf`, with an idempotent table
-initialization in the Worker. A unique date and a 10-minute fenced lease
-serialize generation. A day gets up to three automatic attempts, including
-hourly recovery at 22:00 and 23:00 JST. Captured inputs survive inference failure;
-completed reports never invoke AI again. Stored reports retain their URL,
-GUID, publication timestamp and model metadata on every rebuild. D1 retains
-all reports and captures without automatic expiration; the export supports
-up to 10,000 dates and fails rather than silently truncating the archive.
-The RSS contains the latest 30 available reports.
+`REPORTS`は`cf`が作成するD1データベースです。Workerで冪等なテーブル初期化を行います。
+日付の一意制約と、古い処理の書き込みを防ぐ10分間のリースで生成を直列化します。
+1日につき最大3回自動試行し、22:00と23:00 JSTの毎時処理での復旧を含みます。
+取得済み入力は推論に失敗しても保持し、完成したレポートではAIを再実行しません。
+保存済みレポートのURL、GUID、公開日時、モデルのメタデータは再ビルドでも維持します。
+D1のレポートと取得データには自動有効期限を設けていません。エクスポートは最大10,000日分に対応し、
+上限を超えた場合はアーカイブを黙って切り捨てずに失敗します。RSSには最新の利用可能な30件を含めます。
 
-### Production setup
+### 本番環境の設定
 
-1. Set GitHub repository variable `DEVPULSE_SITE_URL` to the deployed site
-   origin, such as `https://<your-worker>.<your-subdomain>.workers.dev`, without
-   a path. RSS links and GUIDs use this absolute origin; keep it stable.
-2. Generate a random token of at least 32 characters. Set the same value as
-   Worker secret `REPORTS_TOKEN` and GitHub Actions secret `REPORTS_TOKEN`.
-   Use the Cloudflare dashboard's Worker secrets settings to avoid pasting
-   credentials into shell arguments. The API rejects missing/short tokens.
-3. Add GitHub Actions secrets `CLOUDFLARE_API_TOKEN` and
-   `CLOUDFLARE_ACCOUNT_ID`. Grant the token only the required Workers deployment,
-   KV, D1 provisioning and Workers AI permissions for the target account.
-   Do not commit tokens or `.dev.vars`/`.env` files.
-4. For the first deployment, run `pnpm run deploy:bootstrap` with `DEVPULSE_SITE_URL`
-   set. This installs the AI binding, D1 binding and both Cron triggers. If
-   necessary, deploy once to create the Worker before adding its secret.
-5. Enable `.github/workflows/reports.yml` on the repository's default branch.
-   Run **Publish daily reports** manually after the first report is generated.
+1. GitHubリポジトリ変数`DEVPULSE_SITE_URL`に、デプロイ済みサイトのオリジン（例：`https://<your-worker>.<your-subdomain>.workers.dev`）をパスなしで設定します。RSSリンクとGUIDはこの絶対オリジンを使うため、変更しないようにしてください。
+2. 32文字以上のランダムなトークンを生成し、Workerシークレット`REPORTS_TOKEN`とGitHub Actionsシークレット`REPORTS_TOKEN`に同じ値を設定します。認証情報をシェル引数に貼り付けないよう、CloudflareダッシュボードのWorkerシークレット設定を使用してください。APIは未設定または短いトークンを拒否します。
+3. GitHub Actionsシークレット`CLOUDFLARE_API_TOKEN`と`CLOUDFLARE_ACCOUNT_ID`を追加します。トークンには対象アカウントのWorkersデプロイ、KV・D1の作成、Workers AIに必要な権限だけを付与してください。トークン、`.dev.vars`、`.env`ファイルはコミットしないでください。
+4. 初回は`DEVPULSE_SITE_URL`を設定して`pnpm run deploy:bootstrap`を実行します。AIとD1のバインディング、および2つのCron Triggerを設定します。必要ならシークレットを追加する前に一度デプロイしてWorkerを作成してください。
+5. リポジトリのデフォルトブランチで`.github/workflows/reports.yml`を有効にします。最初のレポート生成後に**Publish daily reports**を手動実行してください。
 
-The workflow runs at minute 15 of every hour: normal publication starts at
-21:15 JST, and later runs recover failed builds/deployments and remove
-withdrawn content. GitHub schedules may be delayed; this is not an exact
-delivery-time guarantee. It fetches all saved reports, builds Rspress, checks
-a dry-run, deploys, verifies the public feed matches the build, and only then
-records publication in D1. A failure before deployment leaves the previous
-site in place. A failure after deployment can safely repeat the workflow.
-All production deploy workflows should share concurrency group
-`devpulse-production` to avoid an older build replacing a newer one.
+ワークフローは毎時15分に実行されます。通常の公開は21:15 JSTから始まり、
+後続の実行でビルド・デプロイ失敗からの復旧や公開を取り下げたコンテンツの削除を行います。
+GitHubのスケジュール実行は遅延することがあり、正確な配信時刻を保証するものではありません。
+保存済みレポートをすべて取得してRspressをビルドし、ドライランを確認してからデプロイします。
+公開フィードがビルドと一致することを検証した後に、D1に公開を記録します。
+デプロイ前の失敗では既存サイトを維持します。デプロイ後の失敗では安全に再実行できます。
+古いビルドが新しいものを置き換えないよう、本番デプロイのワークフローはすべて
+同時実行グループ`devpulse-production`を共有してください。
 
-Subscribe at **`/rss/reports.xml`** (RSS 2.0). Articles appear at
-`/reports/YYYY-MM-DD/`, with an archive at `/reports/`. The home page and
-archive show a visible RSS subscription button and advertise the feed through
-`link rel="alternate"`. The home page displays the latest AI summary; the
-archive displays that summary with project metrics and source links, so readers
-can follow progress without an RSS reader. The Worker checks the latest report's
-public visibility before serving these overview pages and temporarily returns
-503 if they await republication.
-RSS items contain a title, publication date, short plain-text summary (up to
-180 characters) and a link to the report page. Full report HTML is not embedded
-in the feed; readers follow the link to read the summary, metrics and sources.
+購読先は**`/rss/reports.xml`**（RSS 2.0）です。記事は`/reports/YYYY-MM-DD/`、
+アーカイブは`/reports/`にあります。ホームとアーカイブにはRSS購読ボタンを表示し、
+`link rel="alternate"`でもフィードを案内します。ホームには最新のAI要約、
+アーカイブには要約とプロジェクト指標・ソースリンクを表示するため、RSSリーダーなしでも進捗を追えます。
+Workerはこれらの概要ページを返す前に最新レポートの公開可否を確認し、再公開待ちの場合は一時的に503を返します。
+RSSの各項目にはタイトル、公開日時、短いプレーンテキストの要約（最大180文字）、記事へのリンクを含めます。
+記事のHTML全体は埋め込みません。要約、指標、ソースはリンク先で確認してください。
 
-### Repository priority
+### リポジトリの優先度
 
-Projects are grouped and ordered by `tier` (`high` / `medium` / `low`) and by
-their order in the config; both are edited on `/admin`. The dashboard then sorts
-cards by `priority` (`highest` (最優先), `next` (次に着手), `later` (後回し),
-`unset` (未設定)); ties keep the config order. Each viewer sets this per
-project in the dashboard, stored in that browser's `localStorage` only. The
-optional `priority` field of a project in the CONFIG KV is just the default
-shown before a viewer chooses one; the admin page does not edit it.
+プロジェクトは`tier`（`high` / `medium` / `low`）と設定内の順序でグループ化・並び替えします。
+どちらも`/admin`で編集できます。ダッシュボードではさらに`priority`
+（`highest`（最優先）、`next`（次に着手）、`later`（後回し）、`unset`（未設定））でカードを並び替え、
+同じ優先度では設定の順序を維持します。閲覧者はダッシュボードでプロジェクトごとに設定でき、
+そのブラウザの`localStorage`だけに保存します。CONFIG KVのプロジェクトにある任意の`priority`は、
+閲覧者が選択する前のデフォルト値です。管理画面では編集しません。
 
-### Local checks and manual recovery
+### ローカルでの確認と手動復旧
 
-Use an ignored `.dev.vars` file for the local Worker token. To call a deployed
-API, securely set `DEVPULSE_SITE_URL` and `REPORTS_TOKEN` in your environment:
+ローカルWorkerのトークンにはGitの追跡対象外の`.dev.vars`を使ってください。
+デプロイ済みAPIを呼び出すには、環境変数`DEVPULSE_SITE_URL`と`REPORTS_TOKEN`を安全に設定します。
 
 ```bash
-pnpm run reports:generate  # current target day only; explicitly resets exhausted attempts
-pnpm run reports:fetch     # download saved, currently publishable reports
-pnpm run build            # create Markdown articles and RSS
-pnpm run deploy:check      # validate Worker without uploading
+pnpm run reports:generate  # 現在の対象日のみ。試行回数を使い切った状態を明示的にリセット
+pnpm run reports:fetch     # 保存済みで現在公開可能なレポートを取得
+pnpm run build            # Markdown記事とRSSを生成
+pnpm run deploy:check      # アップロードせずにWorkerを検証
 ```
 
-`reports:generate` can incur a Workers AI charge; local unit tests mock AI
-and GitHub. A running generation returns HTTP 409. Fix the failure before
-requesting a manual reset. To retry **publication only**, rerun the Actions
-workflow: do not regenerate. `reports:ack` is reserved for a verified successful
-deployment. The workflow verifies the exact generated feed before using it.
+`reports:generate`ではWorkers AIの料金が発生する場合があります。ローカルの単体テストでは
+AIとGitHubをモック化しています。生成中の場合はHTTP 409を返します。
+手動リセットの前に失敗原因を修正してください。**公開だけ**を再試行する場合はActionsワークフローを
+再実行し、レポートは再生成しないでください。`reports:ack`はデプロイの成功を検証した後にだけ使用します。
+ワークフローは、生成したフィードとの厳密な一致を確認してから実行します。
 
-Generated Markdown, `.reports-cache/` and the feed manifest are ignored by
-Git. `pnpm run deploy` always restores the archive first and fails if the
-report API is unavailable. Do not use `deploy:bootstrap` or a direct
-`cf deploy` on an existing archive without first fetching saved reports:
-deploying a checkout without that cache publishes an empty archive.
-Treat the cache as a temporary build input, never a backup.
-Run `pnpm run test`, `pnpm run check`, `pnpm exec tsc --noEmit`,
-`pnpm run format` and `pnpm run deploy:check` before publishing changes.
+生成Markdown、`.reports-cache/`、フィードマニフェストはGitの追跡対象外です。
+`pnpm run deploy`は必ず先にアーカイブを復元し、レポートAPIが利用できなければ失敗します。
+既存アーカイブがある環境で、保存済みレポートを取得せずに`deploy:bootstrap`や直接の`cf deploy`を
+実行しないでください。キャッシュのないチェックアウトをデプロイすると、空のアーカイブを公開してしまいます。
+キャッシュは一時的なビルド入力であり、バックアップとして扱わないでください。
+変更を公開する前に`pnpm run test`、`pnpm run check`、`pnpm exec tsc --noEmit`、
+`pnpm run format`、`pnpm run deploy:check`を実行してください。
 
-Structured Worker events `report_generated` and `report_generation_failed`
-identify the target date; check them alongside `snapshot_sync_failed` and
-GitHub Actions step results. D1 `daily_reports` records `attempts`,
-`lease_until`, captured `input`, completed `report`, and deployment
-`published_at`; a stored report without deployment acknowledgement needs
-publication recovery, not another AI call.
+Workerの構造化イベント`report_generated`と`report_generation_failed`には対象日が含まれます。
+`snapshot_sync_failed`やGitHub Actionsのステップ結果と合わせて確認してください。
+D1の`daily_reports`には`attempts`、`lease_until`、取得済み`input`、完成した`report`、
+デプロイ時の`published_at`を記録します。保存済みレポートのデプロイ確認が未記録の場合は、
+AIを再度呼び出すのではなく公開処理を復旧してください。
 
-### GitHub token
+### GitHubトークン
 
-`GITHUB_TOKEN` raises the GitHub API rate limit for the hourly synchronization.
-Create a fine-grained personal access token with **Public repositories (read-only)**
-access and no extra permissions, and set an expiration of 90 days or less. Set it
-as Worker secret `GITHUB_TOKEN` in the Cloudflare dashboard (avoid shell arguments).
-The Worker sends it only to `api.github.com`, never logs it, and still publishes
-only repositories whose `visibility` is `public`.
+`GITHUB_TOKEN`は毎時同期のGitHub APIレート制限を引き上げます。
+**Public repositories (read-only)**のアクセス権を持ち、追加権限のないfine-grained personal access tokenを
+作成し、有効期限を90日以内に設定してください。CloudflareダッシュボードでWorkerシークレット
+`GITHUB_TOKEN`として設定し、シェル引数には指定しないでください。
+Workerはトークンを`api.github.com`にだけ送信し、ログには記録しません。
+公開対象も`visibility`が`public`のリポジトリに限定します。
 
-To renew before expiry: generate a new token with the same scope, replace the
-Worker secret, then trigger a sync and confirm `snapshot_sync_completed` has
-`failures: 0` in the logs. Calendar a reminder a week before expiry; an expired
-token causes HTTP 401 failures (last snapshots are kept for up to 48 hours).
-Without the secret the Worker falls back to unauthenticated requests.
+期限前に更新するには、同じ権限の新しいトークンを生成してWorkerシークレットを置き換え、
+同期を実行し、ログの`snapshot_sync_completed`で`failures: 0`を確認します。
+期限の1週間前にリマインダーを設定してください。期限切れではHTTP 401が発生し、
+最後のスナップショットは最大48時間保持されます。シークレットがなければ未認証リクエストにフォールバックします。
 
-### Public scope and withdrawal
+### 公開範囲と公開の取り下げ
 
-Only configured `published: true` projects with public, non-expired GitHub
-snapshots enter AI input and publication. If any repository included in a
-past report is removed or becomes private, the entire report is omitted on
-the next build (including its summary). The Worker also stops serving that
-article and temporarily returns 503 for an affected RSS until it is rebuilt.
-Visibility is observed during GitHub synchronization; a transient GitHub
-failure can retain previously public data for up to 48 hours. Set
-`published: false` and deploy for an explicit immediate opt-out.
+設定で`published: true`となっており、公開かつ有効期限内のGitHubスナップショットがある
+プロジェクトだけをAI入力と公開対象に含めます。過去のレポートに含まれたリポジトリが削除または
+非公開になった場合、次のビルドでそのレポート全体（要約を含む）を除外します。
+Workerもその記事の配信を停止し、影響を受けるRSSには再ビルドまで一時的に503を返します。
+公開可否はGitHub同期時に確認します。一時的なGitHub障害では、以前公開されていたデータを
+最大48時間保持する場合があります。明示的に即座に公開を取り下げるには、
+`published: false`に設定してデプロイしてください。
 
-Static client chunks, search indexes and copies already downloaded by RSS
-readers cannot be recalled. A complete site rebuild removes withdrawn text
-from the published build; this feed is for information safe to publish,
-not access-controlled private reporting. The source records remain in D1
-for recovery and require an explicit administrator action to erase.
+静的なクライアントチャンク、検索インデックス、RSSリーダーがダウンロード済みのコピーは回収できません。
+サイト全体を再ビルドすると、公開ビルドから取り下げたテキストを削除します。
+このフィードは公開してよい情報のためのもので、アクセス制御された非公開レポート用ではありません。
+元のレコードは復旧用にD1に残り、削除するには管理者の明示的な操作が必要です。
 
-## Setup
+## セットアップ
 
-Install the dependencies:
+依存関係をインストールします。
 
 ```bash
-npm install
+pnpm install --frozen-lockfile
 ```
 
-## Get started
+## 開発の開始
 
-Start the dev server:
+開発サーバーを起動します。
 
 ```bash
-npm run dev
+pnpm run dev
 ```
 
-Build the website for production:
+本番用にサイトをビルドします。
 
 ```bash
-npm run build
+pnpm run build
 ```
 
-Preview the production build locally:
+本番ビルドをローカルでプレビューします。
 
 ```bash
-npm run preview
+pnpm run preview
 ```
