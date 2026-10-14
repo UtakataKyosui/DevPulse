@@ -37,6 +37,35 @@ command remains `cf deploy`. Keep `wrangler.config.ts` alongside the Cloudflare
 configuration, as it specifies the assets directory. No `cf init` is needed
 once these configuration files exist.
 
+## First-time setup checklist
+
+Everything below needs production access and is not done by the code. Do it in
+this order; each item links to the section with the details.
+
+| # | Where | Name | Value / how to get it |
+|---|---|---|---|
+| 1 | GitHub variable | `DEVPULSE_SITE_URL` | Deployed site origin, no path ([Production setup](#production-setup)) |
+| 2 | GitHub secret | `CLOUDFLARE_API_TOKEN` | API token limited to Workers, KV, D1 and Workers AI; **required by `reports.yml`** |
+| 3 | GitHub secret | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare account ID |
+| 4 | GitHub secret and Worker secret | `REPORTS_TOKEN` | Same random string of 32+ characters in both places |
+| 5 | Worker secret | `GITHUB_TOKEN` | Fine-grained PAT, public repositories read-only ([GitHub token](#github-token)) |
+| 6 | Cloudflare Zero Trust | Access Application | Self-hosted app for `/admin*` and `/api/admin/*` ([Access setup](#access-setup)) |
+| 7 | Worker secret | `ACCESS_TEAM_DOMAIN` | `<team>.cloudflareaccess.com` |
+| 8 | Worker secret | `ACCESS_AUD` | AUD tag of the Access Application |
+| 9 | Worker secret | `ADMIN_ALLOWED_EMAILS` | Comma-separated emails allowed on `/admin` |
+| 10 | Cloudflare dashboard | `workers.dev` and Preview URLs | Disable them ([Disable `workers.dev`](#disable-workersdev-and-preview-urls)) |
+
+Then migrate the data and verify:
+
+1. Deploy once with the seed file ([Production migration](#production-migration), step 1).
+2. Seed the `CONFIG` KV namespace: `pnpm run config:seed -- --remote --namespace-id <id>`.
+3. Run the **Publish daily reports** workflow and check `GET /api/projects`.
+4. Run the unauthenticated-access checks in
+   [Verify that unauthenticated access is blocked](#verify-that-unauthenticated-access-is-blocked).
+
+Without items 7 to 9 `/admin` answers 503 (fail closed). Without item 5 the
+hourly sync falls back to unauthenticated GitHub requests and hits the rate limit.
+
 ## Admin authentication (Cloudflare Access)
 
 `/admin*` and `/api/admin/*` are protected twice: by a Cloudflare Access
