@@ -97,7 +97,7 @@ async function openAdmin(env: AdminApiEnv) {
   vi.stubGlobal('confirm', () => true);
   window.confirm = () => true;
   render(<App />);
-  await screen.findByText(/revision 2 \//);
+  await screen.findByText(/revision [23] \/ 最終更新/);
   return userEvent.setup();
 }
 
@@ -140,6 +140,36 @@ describe('admin UI', () => {
     );
     expect((await readProjectConfig(store)).projects[0]?.name).toBe('Renamed');
     await screen.findByText(/revision 3\)。/);
+  });
+
+  it('saves priority to CONFIG and restores it when reopening the admin', async () => {
+    const { store, env } = await afterMistake();
+    const user = await openAdmin(env);
+    const first = screen.getAllByLabelText('着手優先度')[0];
+    if (!first) throw new Error('Priority field missing');
+    await user.selectOptions(first, 'highest');
+    await user.click(screen.getByRole('button', { name: /変更を保存/ }));
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog.textContent).toContain('着手優先度');
+    expect(dialog.textContent).toContain('highest');
+    await user.click(
+      within(dialog).getByRole('button', { name: 'この内容で保存' }),
+    );
+    await waitFor(async () =>
+      expect((await readProjectConfig(store)).revision).toBe(3),
+    );
+    expect((await readProjectConfig(store)).projects[0]?.priority).toBe(
+      'highest',
+    );
+    cleanup();
+    await openAdmin(env);
+    const restored = screen.getAllByLabelText('着手優先度')[0];
+    if (!restored) throw new Error('Priority field missing after reopening');
+    expect(
+      within(restored)
+        .getByRole('option', { selected: true })
+        .getAttribute('value'),
+    ).toBe('highest');
   });
 
   it('restores the previous revision with only UI operations', async () => {

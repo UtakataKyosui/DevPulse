@@ -29,7 +29,7 @@ const FIELD_LABEL: Record<string, string> = {
   repository: 'リポジトリ',
   slug: 'slug',
   id: 'id',
-  priority: 'priority',
+  priority: '着手優先度',
 };
 
 export interface FieldIssue {
