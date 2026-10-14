@@ -35,6 +35,7 @@ export {
   rawIssuesSchema,
   rawMilestonesSchema,
   snapshotFileSchema,
+  storedProjectConfigSchema,
 } from './schema.ts';
 export { selectFeaturedMilestone } from './select-milestone.ts';
 export { sortProjectsByTier } from './sort-projects.ts';

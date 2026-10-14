@@ -19,27 +19,42 @@ export const projectDefinitionSchema = z.strictObject({
   featuredMilestoneNumber: z.number().int().positive().optional(),
 });
 
+const projectsShape = z.array(projectDefinitionSchema);
+
+function rejectDuplicates(
+  projects: z.infer<typeof projectsShape>,
+  ctx: z.RefinementCtx,
+) {
+  for (const key of ['id', 'slug', 'repository'] as const) {
+    const seen = new Set<string>();
+    projects.forEach((project, index) => {
+      const value = project[key];
+      const normalized = key === 'repository' ? repositoryKey(value) : value;
+      if (seen.has(normalized)) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['projects', index, key],
+          message: `duplicate ${key}: ${value}`,
+        });
+      }
+      seen.add(normalized);
+    });
+  }
+}
+
 export const projectConfigSchema = z
+  .strictObject({ projects: projectsShape })
+  .superRefine(({ projects }, ctx) => rejectDuplicates(projects, ctx));
+
+/** KV `config:projects:v1` に保存するドキュメント。revision は保存ごとに 1 ずつ増える。 */
+export const storedProjectConfigSchema = z
   .strictObject({
-    projects: z.array(projectDefinitionSchema),
+    revision: z.number().int().positive(),
+    updatedAt: z.string().datetime({ offset: true }),
+    updatedBy: z.string().min(1),
+    projects: projectsShape,
   })
-  .superRefine(({ projects }, ctx) => {
-    for (const key of ['id', 'slug', 'repository'] as const) {
-      const seen = new Set<string>();
-      projects.forEach((project, index) => {
-        const value = project[key];
-        const normalized = key === 'repository' ? repositoryKey(value) : value;
-        if (seen.has(normalized)) {
-          ctx.addIssue({
-            code: 'custom',
-            path: ['projects', index, key],
-            message: `duplicate ${key}: ${value}`,
-          });
-        }
-        seen.add(normalized);
-      });
-    }
-  });
+  .superRefine(({ projects }, ctx) => rejectDuplicates(projects, ctx));
 
 const count = z.number().int().nonnegative();
 const dateTime = z.string().datetime({ offset: true });
