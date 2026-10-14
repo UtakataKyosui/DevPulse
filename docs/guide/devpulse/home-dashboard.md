@@ -1,3 +1,7 @@
+---
+description: 公開ダッシュボードの表示、管理画面での設定、データ更新の仕組み
+---
+
 # Home ダッシュボード
 
 Home(`pageType: home`)の Hero 直下に、公開プロジェクトの状況を表示します。`features` の有無には依存しません。
@@ -5,7 +9,7 @@ Home(`pageType: home`)の Hero 直下に、公開プロジェクトの状況を�
 ## 仕組み
 
 - `theme/index.tsx` が Rspress の `Layout` をラップし、`afterHero` スロットに `ProjectDashboard` を渡します。`afterHero` は Home のみで描画されるため、通常ドキュメントの Sidebar/TOC には影響しません。
-- データはビルド時に `src/data/devpulse/*.json` を静的 import し、`buildProjectViews` で `ProjectView` に変換します。ブラウザから GitHub API は呼びません。
+- データは公開APIから取得し、`buildProjectViews`で`ProjectView`に変換します。ブラウザからGitHub APIは呼びません。
 - 判定基準時刻 `now` は `rspress.config.ts` でビルド時に 1 度だけ決まり(`__DEVPULSE_BUILD_TIME__`)、SSG とクライアントで同一値になるため hydration 不整合は起きません。
 - `ProjectView` から表示モデルへの変換は `src/components/devpulse/model.ts` の純粋関数です。
 
@@ -16,6 +20,12 @@ Home(`pageType: home`)の Hero 直下に、公開プロジェクトの状況を�
 - 進捗が算出できない場合は「—」を表示し、0% / 100% とは区別します。
 - 休止・完了・アーカイブ・計画中は Health の評価対象外で、赤になりません。
 - 「最終同期」はデータ取得時点、「最終Commit」はリモートの最新コミット日で、別の値です。同期が古い場合は警告を表示します。
+
+## 設定の編集
+
+着手優先度、公開状態、Lifecycle、Tier、並び順、代表Milestoneは管理画面で編集します。
+設定はCONFIG KVに保存され、公開サイトは閲覧専用です。すべての閲覧者に共通の優先度を表示します。
+旧ダッシュボードがブラウザ内に保存した優先度は使用しません。必要な値は管理画面で設定してください。
 
 ## 最新データの取得とデプロイ
 

@@ -20,6 +20,7 @@ import type {
   ProjectDefinition,
   Tier,
 } from '../lib/devpulse/types.ts';
+import { PRIORITY_LABELS, type Priority } from '../lib/devpulse/types.ts';
 import { cn } from '../lib/utils.ts';
 import { formatTime, LIFECYCLES, TIER_LABEL, TIERS } from './model.ts';
 
@@ -171,6 +172,25 @@ export function ProjectCard(props: Props) {
               {TIERS.map((t) => (
                 <option key={t} value={t}>
                   {TIER_LABEL[t]}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+          <Field
+            label="着手優先度"
+            htmlFor={id('priority')}
+            errors={forField('priority')}
+          >
+            <NativeSelect
+              id={id('priority')}
+              value={p.priority ?? 'unset'}
+              onChange={(e) =>
+                props.onChange({ priority: e.target.value as Priority })
+              }
+            >
+              {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
                 </option>
               ))}
             </NativeSelect>
