@@ -20,12 +20,18 @@ class GitHubError extends Error {
   }
 }
 
-async function github(path: string, fetcher: typeof fetch): Promise<unknown> {
+async function github(
+  path: string,
+  fetcher: typeof fetch,
+  token?: string,
+): Promise<unknown> {
   const response = await fetcher(`https://api.github.com/repos/${path}`, {
     headers: {
       Accept: 'application/vnd.github+json',
       'User-Agent': 'DevPulse',
       'X-GitHub-Api-Version': '2022-11-28',
+      // Never log or persist this header; it is only sent to api.github.com.
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     signal: AbortSignal.timeout(20_000),
   });
@@ -33,11 +39,19 @@ async function github(path: string, fetcher: typeof fetch): Promise<unknown> {
   return response.json();
 }
 
-async function pages(path: string, fetcher: typeof fetch): Promise<unknown[]> {
+async function pages(
+  path: string,
+  fetcher: typeof fetch,
+  token?: string,
+): Promise<unknown[]> {
   const result: unknown[] = [];
   // Bound memory and subrequests; never save a silently truncated result.
   for (let page = 1; page <= 10; page++) {
-    const items = await github(`${path}&per_page=100&page=${page}`, fetcher);
+    const items = await github(
+      `${path}&per_page=100&page=${page}`,
+      fetcher,
+      token,
+    );
     if (!Array.isArray(items)) throw new Error('Invalid GitHub list');
     result.push(...items);
     if (items.length < 100) return result;
@@ -46,18 +60,19 @@ async function pages(path: string, fetcher: typeof fetch): Promise<unknown[]> {
 }
 
 export async function syncSnapshots(
-  env: Pick<Env, 'SNAPSHOTS'>,
+  env: Pick<Env, 'SNAPSHOTS'> & { GITHUB_TOKEN?: string },
   fetcher: typeof fetch = fetch,
   now = new Date(),
 ): Promise<void> {
   const previous = snapshotFileSchema.parse(
     (await env.SNAPSHOTS.get(SNAPSHOT_KEY, 'json')) ?? { snapshots: [] },
   );
+  const token = env.GITHUB_TOKEN || undefined;
   const snapshots = [];
   let failures = 0;
   for (const project of projects) {
     try {
-      const repository = (await github(project.repository, fetcher)) as {
+      const repository = (await github(project.repository, fetcher, token)) as {
         private?: boolean;
         visibility?: string;
       };
@@ -66,16 +81,19 @@ export async function syncSnapshots(
       const rawMilestones = await pages(
         `${project.repository}/milestones?state=all`,
         fetcher,
+        token,
       );
       const rawIssues = await pages(
         `${project.repository}/issues?state=closed`,
         fetcher,
+        token,
       );
       let lastActivityAt: string | null = null;
       try {
         const commits = (await github(
           `${project.repository}/commits?per_page=1`,
           fetcher,
+          token,
         )) as { commit: { committer: { date: string } } }[];
         lastActivityAt = commits[0]?.commit.committer.date ?? null;
       } catch (error) {

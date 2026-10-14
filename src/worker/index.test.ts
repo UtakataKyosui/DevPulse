@@ -49,6 +49,52 @@ describe('scheduled snapshot sync', () => {
     expect(kv.put).toHaveBeenCalledWith(SNAPSHOT_KEY, expect.any(String));
   });
 
+  it('sends the GitHub token only as a header and never leaks it', async () => {
+    const secret = 'github_pat_SECRET_TEST_VALUE';
+    const kv = storage();
+    const headers: (string | null)[] = [];
+    const fetcher = vi.fn(
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const url = String(input);
+        headers.push(new Headers(init?.headers).get('Authorization'));
+        if (url.includes('/milestones?') || url.includes('/issues?'))
+          return Response.json([]);
+        if (url.includes('/commits?')) return Response.json([]);
+        return Response.json({ private: false, visibility: 'public' });
+      },
+    );
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await syncSnapshots(
+      { SNAPSHOTS: kv, GITHUB_TOKEN: secret } as unknown as Env,
+      fetcher,
+      new Date('2026-10-13T01:00:00Z'),
+    );
+    expect(headers.length).toBeGreaterThan(0);
+    expect(headers.every((h) => h === `Bearer ${secret}`)).toBe(true);
+    expect(JSON.stringify(kv.value())).not.toContain(secret);
+    expect(
+      JSON.stringify([...log.mock.calls, ...error.mock.calls]),
+    ).not.toContain(secret);
+    log.mockRestore();
+    error.mockRestore();
+  });
+
+  it('skips private repositories even when authenticated', async () => {
+    const kv = storage();
+    const fetcher = vi.fn(async () =>
+      Response.json({ private: true, visibility: 'private' }),
+    );
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    await syncSnapshots(
+      { SNAPSHOTS: kv, GITHUB_TOKEN: 't' } as unknown as Env,
+      fetcher,
+      new Date('2026-10-13T01:00:00Z'),
+    );
+    expect((kv.value() as typeof snapshots).snapshots).toHaveLength(0);
+    log.mockRestore();
+  });
+
   it('keeps successful data on transient errors but removes missing repositories', async () => {
     const now = new Date(
       snapshots.snapshots[0]?.fetchedAt ?? '2026-10-13T00:00:00Z',
