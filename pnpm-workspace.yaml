@@ -1,6 +1,8 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+# CI pins pnpm explicitly; keep its self-management metadata out of the lockfile.
+pmOnFail: ignore
 allowBuilds:
   '@parcel/watcher': false
   esbuild: true
