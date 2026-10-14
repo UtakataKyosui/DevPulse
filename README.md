@@ -23,26 +23,7 @@ pnpm run preview
 
 静的サイトのみで開発する場合は、`DEVPULSE_API_URL='' pnpm run dev`を使用します。
 
-## 詳細ドキュメント
+## エージェントによる開発
 
-- [初回セットアップチェックリスト](documentation/ja/setup-checklist.md)：トークン、シークレット、認証、データ投入の設定順序
-- [UIコンポーネント](documentation/ja/ui.md)：shadcn/uiとTailwind CSS
-- [デプロイ](documentation/ja/deployment.md)：Cloudflare Workersへの初回・通常デプロイ
-- [管理者認証](documentation/ja/authentication.md)：Cloudflare Accessの設定とローカル開発
-- [プロジェクト設定](documentation/ja/projects.md)：追加、履歴、復元、反映遅延、優先度
-- [管理者API](documentation/ja/admin-api.md)：エンドポイントと検証ルール
-- [進捗同期](documentation/ja/synchronization.md)：毎時同期とGitHubトークン
-- [日次レポートとRSS](documentation/ja/reports.md)：生成の仕組みと本番設定
-- [レポートの運用](documentation/ja/report-operations.md)：手動復旧と公開の取り下げ
-
-## チェック
-
-```bash
-pnpm run test
-pnpm run check
-pnpm exec tsc --noEmit
-pnpm run format
-```
-
-デプロイ前の検証手順と必要な環境変数は、[デプロイ](documentation/ja/deployment.md)と
-[レポートの運用](documentation/ja/report-operations.md)を参照してください。
+変更時の検証ルールは [AGENTS.md](AGENTS.md)、ローカルビルドと作業別の手順は
+[DevPulse開発スキル](.agents/skills/devpulse-development/SKILL.md)を参照してください。

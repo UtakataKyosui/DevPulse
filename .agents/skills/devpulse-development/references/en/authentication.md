@@ -1,6 +1,6 @@
 # Admin authentication (Cloudflare Access)
 
-[README](../../README.en.md) | [日本語](../ja/authentication.md)
+[README](../../../../../README.en.md) | [日本語](../ja/authentication.md)
 
 `/admin*` and `/api/admin/*` are protected twice: by a Cloudflare Access
 Application and by Worker-side verification (`src/worker/admin-auth.ts`). The

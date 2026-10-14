@@ -1,6 +1,6 @@
 # Project configuration store
 
-[README](../../README.en.md) | [日本語](../ja/projects.md)
+[README](../../../../../README.en.md) | [日本語](../ja/projects.md)
 
 The project list is stored as one JSON document at key `config:projects:v1` in
 the `CONFIG` Workers KV namespace: `{ revision, updatedAt, updatedBy, projects }`.

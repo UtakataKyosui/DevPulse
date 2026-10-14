@@ -1,6 +1,6 @@
 # shadcn/ui
 
-[README](../../README.md) | [English](../en/ui.md)
+[README](../../../../../README.md) | [English](../en/ui.md)
 
 Tailwind CSS v4をRsbuildプラグイン経由で統合しています。`components.json`で
 shadcn/uiの基本コンポーネントの配置先を`src/components/ui/`に設定しています。
