@@ -4,6 +4,10 @@
 @import "tailwindcss/utilities.css" layer(utilities);
 @custom-variant dark (&:where(.dark, .dark *));
 
+.rp-home-hero__image-img {
+  border-radius: 50%;
+}
+
 @theme inline {
   --color-background: var(--rp-c-bg);
   --color-card: var(--rp-c-bg);
