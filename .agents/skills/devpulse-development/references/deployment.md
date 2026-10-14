@@ -1,6 +1,6 @@
 # Cloudflare Workersへのデプロイ
 
-[README](../../README.md) | [English](../en/deployment.md)
+[README](../../../../README.md) | [開発スキル](../SKILL.md)
 
 Node.js 22.18以降とpnpmを使用してください。`pnpm install --frozen-lockfile`で
 依存関係をインストールし、ログインしてデプロイします。
