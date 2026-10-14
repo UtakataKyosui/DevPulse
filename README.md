@@ -127,8 +127,9 @@ archive displays that summary with project metrics and source links, so readers
 can follow progress without an RSS reader. The Worker checks the latest report's
 public visibility before serving these overview pages and temporarily returns
 503 if they await republication.
-The feed body uses only paragraphs, headings, lists and source links generated
-from saved report data, without Rspress theme classes or heading anchors.
+RSS items contain a title, publication date, short plain-text summary (up to
+180 characters) and a link to the report page. Full report HTML is not embedded
+in the feed; readers follow the link to read the summary, metrics and sources.
 
 ### Local checks and manual recovery
 
