@@ -4,9 +4,9 @@
 
 ## 追加手順
 
-1. `src/data/devpulse/projects.sample.json` にプロジェクトを定義する
-2. `docs/projects/<slug>/index.mdx` を `docs/projects/devpulse/index.mdx` から複製し、`<ProjectDetail slug="...">` の `slug` と概要を書き換える
-3. `docs/projects/_meta.json` に `{ "type": "dir", "name": "<slug>" }` を追加する。プロジェクト内の `_meta.json` は不要です。`index.mdx` だけなら単独リンクになり、関連する Markdown/MDX ファイルを追加すると自動でフォルダ表示になります。並び順を指定するために `_meta.json` を置く場合は、`index` を含めず関連ページだけを列挙します。
+1. 管理画面(`/admin`)でプロジェクトを追加して公開する
+2. 次回ビルド(毎時)でサイドバーと詳細ページが生成される。独自の文章を書く場合のみ `docs/projects/<slug>/index.mdx` を `docs/projects/devpulse/index.mdx` から複製し、`<ProjectDetail slug="...">` の `slug` と概要を書き換える
+3. 並び順や構成を変えたい場合のみ、プロジェクト内に `_meta.json` を置く。`index` を含めず関連ページだけを列挙します。
 
 公開対象の slug に MDX ページがあることはテスト(`detail.test.tsx`)で検証します。
 
