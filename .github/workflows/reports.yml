@@ -30,6 +30,9 @@ jobs:
           node-version: 22.18.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # 取得に失敗するとここでジョブが止まり、デプロイされない(fixture へは切り替えない)。
+      - name: Fetch project config
+        run: pnpm run projects:fetch
       - name: Fetch saved reports
         run: pnpm run reports:fetch
         env:

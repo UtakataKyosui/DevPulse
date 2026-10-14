@@ -1,16 +1,11 @@
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { pluginTailwindcss } from '@rsbuild/plugin-tailwindcss';
 import { defineConfig } from '@rspress/core';
 import { pluginRss } from '@rspress/plugin-rss';
-import projectsJson from './src/data/devpulse/projects.json';
-import snapshotsJson from './src/data/devpulse/snapshots.json';
 import {
-  projectConfigSchema,
-  selectPublicData,
-  snapshotFileSchema,
-} from './src/lib/devpulse/index.ts';
-import { buildProjectSidebar } from './src/lib/devpulse/project-sidebar.ts';
+  loadBuildProjects,
+  syncProjectPages,
+} from './src/lib/devpulse/build-config.ts';
 import { feedExcerpt } from './src/lib/reports/feed.ts';
 import { loadReports, prepareReports } from './src/lib/reports/prepare.ts';
 
@@ -36,27 +31,11 @@ if (
 // ビルド 1 回につき 1 度だけ評価され、SSG とクライアントの双方に同じ値が埋め込まれる(hydration 不整合の防止)
 const DEVPULSE_BUILD_TIME = new Date().toISOString();
 
-// サイドバーと詳細ページの除外用(ビルド時の設定取得は別 Issue)。Home は実行時に API から取得するため埋め込まない
-const DEVPULSE_PUBLIC_DATA = selectPublicData(
-  projectConfigSchema.parse(projectsJson).projects,
-  snapshotFileSchema.parse(snapshotsJson).snapshots,
-);
-
-// lifecycle を変更したら dev 起動・ビルド時にサイドバーも更新する。
-const projectMetaPath = path.join(__dirname, 'docs/projects/_meta.json');
-const projectMeta = `${JSON.stringify(buildProjectSidebar(DEVPULSE_PUBLIC_DATA.projects), null, 2)}\n`;
-if (readFileSync(projectMetaPath, 'utf8') !== projectMeta) {
-  writeFileSync(projectMetaPath, projectMeta);
-}
-
-// 公開対象にない slug(非公開・設定から削除済み)の手書き MDX をビルド対象から除外する。
-const publicSlugs = new Set(DEVPULSE_PUBLIC_DATA.projects.map((p) => p.slug));
-const excludedProjectPages = readdirSync(
+// サイドバー・詳細ページ・非公開 MDX の除外はビルド前に取得した設定から作る(取得できなければここで失敗)。
+const excludedProjectPages = syncProjectPages(
   path.join(__dirname, 'docs/projects'),
-  { withFileTypes: true },
-)
-  .filter((entry) => entry.isDirectory() && !publicSlugs.has(entry.name))
-  .map((entry) => `projects/${entry.name}/**`);
+  loadBuildProjects(__dirname),
+);
 
 export default defineConfig({
   root: path.join(__dirname, 'docs'),
