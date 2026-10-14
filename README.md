@@ -101,6 +101,47 @@ must return 401. Automated cases (missing, bad signature, wrong `aud`, expired,
 disallowed email) run in `pnpm test` (`src/worker/admin-auth.test.ts`).
 Live checks against Cloudflare were not performed as part of the code change.
 
+## Project configuration store
+
+The project list is stored as one JSON document at key `config:projects:v1` in
+the `CONFIG` Workers KV namespace: `{ revision, updatedAt, updatedBy, projects }`.
+It is a separate namespace from `SNAPSHOTS` because the hourly sync overwrites
+`SNAPSHOTS` wholesale, while `CONFIG` holds hand-edited data that needs its own
+lifecycle (backup, access scoping, listing). `src/worker/config-store.ts` reads
+and writes it. A missing or invalid value is an error; there is no fallback to
+`projects.json`. Writes validate with `projectConfigSchema` (duplicate id, slug
+and repository are rejected) and are refused when the revision re-read just
+before the write differs from the caller's expected revision. KV has no
+compare-and-swap, so two writes racing between that re-read and the put are not
+detected; this relies on a single administrator.
+
+Seed `projects.json` once, with revision 1 (it refuses to overwrite an existing
+value):
+
+```bash
+pnpm run config:seed                                            # local cf dev KV
+pnpm run config:seed -- --remote --namespace-id <CONFIG namespace id>
+```
+
+The local seed writes under `.wrangler/state` using the binding name as the
+namespace id. Find the production id in the Cloudflare dashboard after
+`cf deploy` provisions `CONFIG`.
+
+### Propagation delay
+
+Per the [Workers KV documentation](https://developers.cloudflare.com/kv/concepts/how-kv-works/),
+a write is visible immediately (usually) only in the location where it was made.
+Other locations serve cached values and see the change "up to 60 seconds or
+more" later; the default `cacheTtl` is 60 seconds. Negative lookups (key not
+found) are cached the same way, and locations that read the key recently take
+longer. The documentation gives no upper bound beyond "or more", so the exact
+maximum is **要確認**; plan for roughly one minute plus an unquantified margin.
+
+Effective delay by consumer, once they read from `CONFIG`: Worker reads (sync
+Cron, `/api/*`) see a change after the KV delay above; the sidebar and detail
+pages also wait for the next hourly build (`15 * * * *`) to fetch the config,
+so up to about one hour plus the KV delay and build time.
+
 ## Progress synchronization
 
 `src/data/devpulse/projects.json` defines the published repositories. The Worker
