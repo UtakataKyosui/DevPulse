@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { snapshotFileSchema } from '../lib/devpulse/schema.ts';
 import { previousReportDate, reportDateSchema } from '../lib/reports/model.ts';
+import { handleAdminApi } from './admin-api.ts';
 import { adminGate, isAdminPath } from './admin-auth.ts';
 import {
   ConfigInvalidError,
@@ -50,9 +51,11 @@ export default {
   ): Promise<Response> {
     const path = new URL(request.url).pathname;
     if (isAdminPath(path)) {
+      if (path.toLowerCase().startsWith('/api/admin'))
+        return handleAdminApi(request, env);
       const denied = await adminGate(request, env);
       if (denied) return denied;
-      // Real admin endpoints are implemented by follow-up tasks.
+      // The /admin page itself is implemented by a follow-up task.
       return new Response('Not found', {
         status: 404,
         headers: { 'Cache-Control': 'no-store' },

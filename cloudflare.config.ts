@@ -17,6 +17,8 @@ export default defineConfig({
       ACCESS_TEAM_DOMAIN: bindings.secret(),
       ACCESS_AUD: bindings.secret(),
       ADMIN_ALLOWED_EMAILS: bindings.secret(),
+      // Owner whose public repositories can be added; never derived from the user.
+      ADMIN_SETTINGS: bindings.json({ githubOwner: 'UtakataKyosui' }),
       REPORT_SETTINGS: bindings.json({
         model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
         maxTokens: 1200,

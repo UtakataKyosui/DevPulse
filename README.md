@@ -162,6 +162,22 @@ deploy. `deploy:bootstrap` and `deploy:check` need the fetch or the fixture
 variable as well. `docs/projects/_meta.json` is rewritten on every build; do
 not commit the fixture's version.
 
+## Admin API
+
+All endpoints sit behind the Access gate (`src/worker/admin-api.ts`) and return
+`Cache-Control: no-store`. `POST` / `PUT` / `DELETE` additionally require an
+`Origin` header equal to the request origin.
+
+| Endpoint | Behavior |
+|---|---|
+| `GET /api/admin/config` | Current `{ revision, updatedAt, updatedBy, projects }` |
+| `PUT /api/admin/config` | Body `{ revision, projects }`. 409 when `revision` is stale; 422 with `errors: [{ path, message }]` for schema errors, slug changes, and repositories that are not public |
+| `GET /api/admin/candidates` | Public repositories of the fixed owner that are not registered yet, each with `defaults` (`published: false`, `tier: low`) |
+
+The owner is `ADMIN_SETTINGS.githubOwner` in `cloudflare.config.ts`. On save,
+repositories that are newly added or newly published are checked against the
+GitHub API with `GITHUB_TOKEN`; newly added ones must belong to that owner.
+
 ## Progress synchronization
 
 The `published` projects in the KV config (`config:projects:v1`) define the repositories. The Worker
