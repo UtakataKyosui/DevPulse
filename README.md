@@ -127,6 +127,8 @@ archive displays that summary with project metrics and source links, so readers
 can follow progress without an RSS reader. The Worker checks the latest report's
 public visibility before serving these overview pages and temporarily returns
 503 if they await republication.
+The feed body uses only paragraphs, headings, lists and source links generated
+from saved report data, without Rspress theme classes or heading anchors.
 
 ### Local checks and manual recovery
 
