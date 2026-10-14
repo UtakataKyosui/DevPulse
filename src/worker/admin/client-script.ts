@@ -17,6 +17,7 @@ var FIELD_LABEL = {
 var state = {
   revision: 0, updatedAt: '', updatedBy: '',
   original: [], projects: [], candidates: [], snapshots: {},
+  history: [], historyLimit: 0, restoring: null,
   errors: {}, banner: null, conflict: false, focus: null
 };
 
@@ -77,7 +78,19 @@ async function load() {
   var cand = await api('/api/admin/candidates');
   state.candidates = cand.ok ? cand.body.candidates : [];
   if (!cand.ok) banner('warn', '追加候補を取得できませんでした (GitHub API の応答エラー)。');
+  await loadHistory();
   render();
+}
+
+async function loadHistory() {
+  var hist = await api('/api/admin/history');
+  state.history = hist.ok ? hist.body.entries : [];
+  state.historyLimit = hist.ok ? hist.body.limit : 0;
+  if (hist.ok) return;
+  var text = '変更履歴を取得できませんでした (HTTP ' + hist.status + ')。';
+  // 保存・復元の成功表示は消さない。
+  if (state.banner && state.banner.kind === 'ok') state.banner.text += ' ' + text;
+  else banner('warn', text);
 }
 
 function snapshotOf(p) { return state.snapshots[p.repository.toLowerCase()] || null; }
@@ -127,13 +140,15 @@ function tierOrder(list) {
   return out;
 }
 
-function computeDiff() {
+function computeDiff() { return diffLines(state.original, state.projects); }
+
+function diffLines(original, projects) {
   var lines = [];
   var before = {};
-  state.original.forEach(function (p) { before[p.id] = p; });
+  original.forEach(function (p) { before[p.id] = p; });
   var now = {};
-  state.projects.forEach(function (p) { now[p.id] = p; });
-  state.projects.forEach(function (p) {
+  projects.forEach(function (p) { now[p.id] = p; });
+  projects.forEach(function (p) {
     var b = before[p.id];
     if (!b) { lines.push('追加: ' + p.name + ' (' + p.repository + ')'); return; }
     Object.keys(Object.assign({}, b, p)).forEach(function (k) {
@@ -142,11 +157,11 @@ function computeDiff() {
       }
     });
   });
-  state.original.forEach(function (b) {
+  original.forEach(function (b) {
     if (!now[b.id]) lines.push('削除: ' + b.name + ' (' + b.repository + ')');
   });
-  var o1 = tierOrder(state.original.filter(function (p) { return now[p.id]; }));
-  var o2 = tierOrder(state.projects.filter(function (p) { return before[p.id]; }));
+  var o1 = tierOrder(original.filter(function (p) { return now[p.id]; }));
+  var o2 = tierOrder(projects.filter(function (p) { return before[p.id]; }));
   TIERS.forEach(function (t) {
     var a = o1[t].filter(function (id) { return before[id].tier === now[id].tier; });
     var b = o2[t].filter(function (id) { return before[id].tier === now[id].tier; });
@@ -177,16 +192,9 @@ async function save() {
     body: JSON.stringify({ revision: state.revision, projects: state.projects })
   });
   if (res.ok) {
-    state.revision = res.body.revision;
-    state.updatedAt = res.body.updatedAt;
-    state.updatedBy = res.body.updatedBy;
-    state.original = clone(res.body.projects);
-    state.projects = clone(res.body.projects);
-    state.errors = {};
-    banner('ok', '保存しました (revision ' + res.body.revision + ')。API・同期・Home には即時反映されます。サイドバーと詳細ページは次回ビルドで反映されます。');
-  } else if (res.status === 409) {
-    state.conflict = true;
-    banner('error', '別の場所で設定が更新されました (最新 revision ' + (res.body && res.body.revision) + ')。再読み込みして変更をやり直してください。この画面の未保存の変更は反映されていません。');
+    applySaved(res.body);
+    banner('ok', '保存しました (revision ' + res.body.revision + ')。' + REFLECT_NOTE);
+    await loadHistory();
   } else if (res.status === 422 && res.body && res.body.errors) {
     state.errors = {};
     var general = [];
@@ -199,9 +207,106 @@ async function save() {
     });
     banner('error', '検証エラーがあります。該当する項目に表示しています。' + general.join(' / '));
   } else {
-    banner('error', '保存に失敗しました (HTTP ' + res.status + ')。');
+    saveFailed(res);
   }
   render();
+}
+
+var REFLECT_NOTE = 'API・同期・Home には即時反映されます。サイドバーと詳細ページは次回ビルドで反映されます。';
+
+function applySaved(body) {
+  state.revision = body.revision;
+  state.updatedAt = body.updatedAt;
+  state.updatedBy = body.updatedBy;
+  state.original = clone(body.projects);
+  state.projects = clone(body.projects);
+  state.errors = {};
+}
+
+function saveFailed(res) {
+  if (res.status === 409) {
+    state.conflict = true;
+    banner('error', '別の場所で設定が更新されました (最新 revision ' + (res.body && res.body.revision) + ')。再読み込みして変更をやり直してください。この画面の未保存の変更は反映されていません。');
+  } else {
+    banner('error', '保存に失敗しました (HTTP ' + res.status + ')。');
+  }
+}
+
+/* ---------- history / restore ---------- */
+function fillList(id, lines) {
+  var list = document.getElementById(id);
+  list.textContent = '';
+  lines.forEach(function (l) { list.appendChild(el('li', { text: l })); });
+}
+
+async function openRestore(revision) {
+  if (isDirty() && !window.confirm('未保存の変更があります。復元するとこの画面の変更は破棄されます。続けますか?')) return;
+  var res = await api('/api/admin/history/' + revision);
+  if (!res.ok) {
+    banner('error', res.status === 404
+      ? 'revision ' + revision + ' は履歴に残っていません。再読み込みしてください。'
+      : '履歴を取得できませんでした (HTTP ' + res.status + ')。');
+    render();
+    return;
+  }
+  state.restoring = res.body;
+  var errors = res.body.errors || [];
+  var lines = errors.length ? [] : diffLines(state.original, res.body.projects);
+  document.getElementById('restore-title').textContent = 'revision ' + revision + ' を復元';
+  document.getElementById('restore-note').textContent = errors.length
+    ? 'この revision は現在の検証ルールを満たさないため復元できません。'
+    : '現在の revision ' + state.revision + ' からの差分です。復元すると revision ' + (state.revision + 1) + ' として保存します。' +
+      (lines.length ? '' : ' (現在の設定と同じ内容です)');
+  fillList('restore-errors', errors.map(function (e) { return e.path + ': ' + e.message; }));
+  fillList('restore-diff', lines);
+  document.getElementById('restore-confirm').disabled = errors.length > 0 || state.conflict;
+  document.getElementById('restore-dialog').showModal();
+}
+
+async function restore() {
+  document.getElementById('restore-dialog').close();
+  var entry = state.restoring;
+  state.restoring = null;
+  if (!entry) return;
+  var res = await api('/api/admin/history/' + entry.revision + '/restore', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ revision: state.revision })
+  });
+  if (res.ok) {
+    applySaved(res.body);
+    banner('ok', 'revision ' + entry.revision + ' の内容を revision ' + res.body.revision + ' として復元しました。' + REFLECT_NOTE);
+    await loadHistory();
+  } else if (res.status === 422 && res.body && res.body.errors) {
+    banner('error', '復元できませんでした: ' + res.body.errors.map(function (e) { return e.path + ': ' + e.message; }).join(' / '));
+  } else if (res.status === 404) {
+    banner('error', 'revision ' + entry.revision + ' は履歴に残っていません。再読み込みしてください。');
+  } else {
+    saveFailed(res);
+  }
+  render();
+}
+
+function renderHistory() {
+  document.getElementById('history-note').textContent = state.historyLimit
+    ? '現在の revision ' + state.revision + ' の前の最大 ' + state.historyLimit + ' 件を保持しています。'
+    : '';
+  var list = document.getElementById('history');
+  list.textContent = '';
+  if (!state.history.length) {
+    list.appendChild(el('li', { class: 'empty', text: '履歴はまだありません。保存すると直前の内容がここに残ります。' }));
+    return;
+  }
+  state.history.forEach(function (h) {
+    list.appendChild(el('li', { class: 'history-item' }, [
+      el('span', { text: 'revision ' + h.revision + ' / ' + fmtTime(h.updatedAt) + ' by ' + h.updatedBy + ' / ' + h.projectCount + ' 件' }),
+      el('button', {
+        type: 'button', 'data-revision': h.revision, disabled: state.conflict,
+        text: '差分を確認して復元…',
+        onclick: function () { openRestore(h.revision); }
+      })
+    ]));
+  });
 }
 
 /* ---------- rendering ---------- */
@@ -398,6 +503,7 @@ function render() {
     ]));
   });
   renderCandidates();
+  renderHistory();
   markDirty();
   if (state.focus) {
     var target = document.querySelector('[data-focus="' + state.focus.replace(/"/g, '') + '"]');
@@ -409,6 +515,11 @@ function render() {
 document.getElementById('save-btn').addEventListener('click', openDiff);
 document.getElementById('diff-confirm').addEventListener('click', save);
 document.getElementById('diff-cancel').addEventListener('click', function () { document.getElementById('diff-dialog').close(); });
+document.getElementById('restore-confirm').addEventListener('click', restore);
+document.getElementById('restore-cancel').addEventListener('click', function () {
+  state.restoring = null;
+  document.getElementById('restore-dialog').close();
+});
 document.getElementById('reload-btn').addEventListener('click', function () {
   if (isDirty() && !window.confirm('未保存の変更を破棄して再読み込みしますか?')) return;
   state.banner = null;
