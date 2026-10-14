@@ -1,6 +1,6 @@
 # Progress synchronization
 
-[README](../../README.en.md) | [日本語](../ja/synchronization.md)
+[README](../../../../../README.en.md) | [日本語](../ja/synchronization.md)
 
 The `published` projects in the KV config (`config:projects:v1`) define the repositories. The Worker
 reads it on every run, fetches their public GitHub milestones, closed issues and latest commits every

@@ -1,6 +1,6 @@
 # 進捗の同期
 
-[README](../../README.md) | [English](../en/synchronization.md)
+[README](../../../../../README.md) | [English](../en/synchronization.md)
 
 KV設定（`config:projects:v1`）の`published`なプロジェクトが同期対象のリポジトリを定義します。
 Workerは実行のたびに設定を読み込み、毎時（`0 * * * *`、UTC）、公開GitHubマイルストーン、

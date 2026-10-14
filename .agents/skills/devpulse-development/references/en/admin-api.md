@@ -1,6 +1,6 @@
 # Admin API
 
-[README](../../README.en.md) | [日本語](../ja/admin-api.md)
+[README](../../../../../README.en.md) | [日本語](../ja/admin-api.md)
 
 All endpoints sit behind the Access gate (`src/worker/admin-api.ts`) and return
 `Cache-Control: no-store`. `POST` / `PUT` / `DELETE` additionally require an

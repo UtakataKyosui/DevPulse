@@ -1,6 +1,6 @@
 # レポートの運用と公開範囲
 
-[README](../../README.md) | [English](../en/report-operations.md)
+[README](../../../../../README.md) | [English](../en/report-operations.md)
 
 ### ローカルでの確認と手動復旧
 

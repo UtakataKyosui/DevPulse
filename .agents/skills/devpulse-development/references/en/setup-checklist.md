@@ -1,6 +1,6 @@
 # First-time setup checklist
 
-[README](../../README.en.md) | [日本語](../ja/setup-checklist.md)
+[README](../../../../../README.en.md) | [日本語](../ja/setup-checklist.md)
 
 These tasks require production access and are not performed by the code.
 Follow the links for details. If the Worker does not exist yet, create it with

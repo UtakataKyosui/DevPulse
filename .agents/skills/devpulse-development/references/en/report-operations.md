@@ -1,6 +1,6 @@
 # Report operations and public scope
 
-[README](../../README.en.md) | [日本語](../ja/report-operations.md)
+[README](../../../../../README.en.md) | [日本語](../ja/report-operations.md)
 
 ### Local checks and manual recovery
 

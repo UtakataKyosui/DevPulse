@@ -1,6 +1,6 @@
 # 日次AIレポートとRSS
 
-[README](../../README.md) | [English](../en/reports.md)
+[README](../../../../../README.md) | [English](../en/reports.md)
 
 Workerは**21:00 JST**（`0 12 * * *`、UTC）に、JSTでの前日分の日本語レポートを生成します。
 Issueのクローズ数はPRを除外し、00:00以上、翌日00:00未満の半開区間で集計します。

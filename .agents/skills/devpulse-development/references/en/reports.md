@@ -1,6 +1,6 @@
 # Daily AI reports and RSS
 
-[README](../../README.en.md) | [日本語](../ja/reports.md)
+[README](../../../../../README.en.md) | [日本語](../ja/reports.md)
 
 The Worker generates a Japanese report at **21:00 JST** (`0 12 * * *`, UTC)
 for the previous JST calendar day. Issue closure counts exclude PRs and use

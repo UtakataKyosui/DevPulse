@@ -1,6 +1,6 @@
 # Deploy to Cloudflare Workers
 
-[README](../../README.en.md) | [日本語](../ja/deployment.md)
+[README](../../../../../README.en.md) | [日本語](../ja/deployment.md)
 
 Use Node.js 22.18 or later and pnpm. Install dependencies with
 `pnpm install --frozen-lockfile`, then sign in and deploy:

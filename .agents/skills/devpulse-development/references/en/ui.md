@@ -1,6 +1,6 @@
 # shadcn/ui
 
-[README](../../README.en.md) | [日本語](../ja/ui.md)
+[README](../../../../../README.en.md) | [日本語](../ja/ui.md)
 
 Tailwind CSS v4 is integrated through the Rsbuild plugin. `components.json`
 configures shadcn/ui primitives in `src/components/ui/`. Dashboard cards, badges,
