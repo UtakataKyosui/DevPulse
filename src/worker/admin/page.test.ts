@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import worker from '../index.ts';
 import type { Env } from '../sync.ts';
-import { CLIENT_SCRIPT } from './client-script.ts';
 
 const PAGES = ['/admin', '/admin/', '/admin/index.html'];
 const ASSETS = ['/admin/app.js', '/admin/app.css'];
@@ -38,8 +37,23 @@ describe('admin page serving', () => {
     expect(response.headers.get('Content-Type')).toContain('text/html');
     const html = await response.text();
     expect(html).toContain('/admin/app.js');
-    expect(html).toContain('即時反映');
-    expect(html).toContain('次回ビルドで反映');
+    expect(html).toContain('/admin/app.css');
+    expect(html).toContain('id="root"');
+  });
+
+  it('allows Radix styles only through a per-response nonce', async () => {
+    const [one, two] = await Promise.all([get('/admin'), get('/admin')]);
+    const nonce = (r: Response) =>
+      /style-src 'self' 'nonce-([^']+)'/.exec(
+        r.headers.get('Content-Security-Policy') ?? '',
+      )?.[1];
+    const html = await one.text();
+    expect(nonce(one)).toBeTruthy();
+    expect(html).toContain(`name="csp-nonce" content="${nonce(one)}"`);
+    expect(nonce(one)).not.toBe(nonce(two));
+    expect(one.headers.get('Content-Security-Policy')).not.toContain(
+      'unsafe-inline',
+    );
   });
 
   it.each([...PAGES, ...ASSETS])(
@@ -80,16 +94,5 @@ describe('admin page serving', () => {
       env(),
     );
     expect(post.status).toBe(405);
-  });
-});
-
-describe('admin client script', () => {
-  it('is syntactically valid', () => {
-    expect(() => new Function(CLIENT_SCRIPT)).not.toThrow();
-  });
-
-  it('never writes markup into the DOM', () => {
-    expect(CLIENT_SCRIPT).not.toMatch(/innerHTML|outerHTML|insertAdjacentHTML/);
-    expect(CLIENT_SCRIPT).not.toMatch(/document\.write|\beval\(/);
   });
 });

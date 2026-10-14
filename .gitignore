@@ -21,3 +21,6 @@ docs/public/reports-manifest.json
 .vscode/*
 !.vscode/extensions.json
 .idea
+
+# Generated admin bundle (pnpm run admin:build)
+src/worker/admin/generated.ts

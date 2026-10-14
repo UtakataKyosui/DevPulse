@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "rspress build",
+    "admin:build": "node scripts/build-admin.ts",
+    "build": "pnpm run admin:build && rspress build",
     "check": "biome check --write",
     "dev": "rspress dev",
     "deploy": "pnpm run projects:fetch && pnpm run reports:fetch && pnpm run build && cf deploy",
@@ -19,7 +20,7 @@
     "reports:fetch": "node scripts/reports.ts fetch",
     "reports:ack": "node scripts/reports.ts ack",
     "reports:generate": "node scripts/reports.ts generate",
-    "test": "vitest run"
+    "test": "pnpm run admin:build && vitest run"
   },
   "dependencies": {
     "@rspress/core": "^2.0.22",
@@ -36,10 +37,15 @@
     "@cloudflare/workers-types": "^5.20261012.1",
     "@rsbuild/plugin-tailwindcss": "^2.0.3",
     "@rspress/plugin-rss": "2.0.23",
+    "@tailwindcss/cli": "^4.3.3",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
     "@types/node": "^22.8.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "cf": "1.0.0-beta.14",
+    "esbuild": "^0.28.2",
+    "happy-dom": "^21.0.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwindcss": "^4.3.3",
