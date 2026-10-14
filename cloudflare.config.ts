@@ -13,6 +13,9 @@ export default defineConfig({
       AI: bindings.ai(),
       REPORTS_TOKEN: bindings.secret(),
       GITHUB_TOKEN: bindings.secret(),
+      ACCESS_TEAM_DOMAIN: bindings.secret(),
+      ACCESS_AUD: bindings.secret(),
+      ADMIN_ALLOWED_EMAILS: bindings.secret(),
       REPORT_SETTINGS: bindings.json({
         model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
         maxTokens: 1200,
@@ -27,6 +30,7 @@ export default defineConfig({
         '/reports',
         '/reports/*',
         '/rss/*',
+        '/admin*',
       ],
     },
     triggers: [
