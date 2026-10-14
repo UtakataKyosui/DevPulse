@@ -1,9 +1,1 @@
-[
-  { "type": "dir-section-header", "name": "start", "label": "Getting Started" },
-  {
-    "type": "dir-section-header",
-    "name": "use-mdx",
-    "label": "Markdown & MDX"
-  },
-  { "type": "dir-section-header", "name": "devpulse", "label": "DevPulse" }
-]
+[{ "type": "dir-section-header", "name": "devpulse", "label": "DevPulse" }]
