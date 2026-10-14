@@ -1,4 +1,3 @@
-import { PRIORITY_LABELS } from '../../lib/devpulse/types.ts';
 import { Badge } from '../ui/badge.tsx';
 import { Card, CardContent, CardHeader } from '../ui/card.tsx';
 import { MilestoneGauge } from './MilestoneGauge.tsx';

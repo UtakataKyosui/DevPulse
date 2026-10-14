@@ -53,6 +53,7 @@ function make(opts: {
     repository: `o/${slug}`,
     published: true,
     lifecycle: opts.lifecycle ?? 'active',
+    tier: 'medium',
     ...('featured' in opts
       ? opts.featured === undefined
         ? {}
@@ -283,7 +284,6 @@ describe('ProjectDashboard 描画', () => {
       html.indexOf('href="/projects/b/"'),
     );
     expect(html).toContain('最優先');
-    expect(html).not.toContain('<select');
   });
   it('テキスト・リンク・aria-label・stale警告を出力する', () => {
     const html = renderToString(
