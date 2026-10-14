@@ -7,6 +7,14 @@ export const LIFECYCLES = [
 ] as const;
 export type Lifecycle = (typeof LIFECYCLES)[number];
 
+export const PRIORITY_LABELS = {
+  highest: '最優先',
+  next: '次に着手',
+  later: '後回し',
+  unset: '未設定',
+} as const;
+export type Priority = keyof typeof PRIORITY_LABELS;
+
 export type HealthStatus = 'stable' | 'warning' | 'stalled' | 'unknown';
 
 export type RepositoryVisibility = 'public' | 'private';
@@ -21,6 +29,8 @@ export interface ProjectDefinition {
   /** 明示的 opt-in のみ公開 */
   published: boolean;
   lifecycle: Lifecycle;
+  /** 着手優先度。省略時は unset */
+  priority?: Priority;
   /** repo 内の Milestone 番号 */
   featuredMilestoneNumber?: number;
 }
