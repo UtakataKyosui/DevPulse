@@ -12,6 +12,7 @@ export default defineConfig({
       REPORTS: bindings.d1({ name: 'devpulse-reports' }),
       AI: bindings.ai(),
       REPORTS_TOKEN: bindings.secret(),
+      GITHUB_TOKEN: bindings.secret(),
       REPORT_SETTINGS: bindings.json({
         model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
         maxTokens: 1200,

@@ -45,7 +45,8 @@ hour (`0 * * * *`, UTC), then writes normalized snapshots to Workers KV.
 `GET /api/snapshots` serves KV data to the dashboard without rebuilding the site.
 `cf deploy` provisions the `SNAPSHOTS` namespace and installs the Cron Trigger.
 
-GitHub requests use the unauthenticated public API (no token required). Transient
+GitHub requests are authenticated with the Worker secret `GITHUB_TOKEN` (see
+[GitHub token](#github-token)). Transient
 failures retain each repository's last successful snapshot for up to 48 hours;
 404/private repositories are removed. Check Worker logs for synchronization failures
 or rate limits. `snapshots.json` is the build-time fallback, not the live store.
@@ -174,6 +175,21 @@ GitHub Actions step results. D1 `daily_reports` records `attempts`,
 `lease_until`, captured `input`, completed `report`, and deployment
 `published_at`; a stored report without deployment acknowledgement needs
 publication recovery, not another AI call.
+
+### GitHub token
+
+`GITHUB_TOKEN` raises the GitHub API rate limit for the hourly synchronization.
+Create a fine-grained personal access token with **Public repositories (read-only)**
+access and no extra permissions, and set an expiration of 90 days or less. Set it
+as Worker secret `GITHUB_TOKEN` in the Cloudflare dashboard (avoid shell arguments).
+The Worker sends it only to `api.github.com`, never logs it, and still publishes
+only repositories whose `visibility` is `public`.
+
+To renew before expiry: generate a new token with the same scope, replace the
+Worker secret, then trigger a sync and confirm `snapshot_sync_completed` has
+`failures: 0` in the logs. Calendar a reminder a week before expiry; an expired
+token causes HTTP 401 failures (last snapshots are kept for up to 48 hours).
+Without the secret the Worker falls back to unauthenticated requests.
 
 ### Public scope and withdrawal
 
