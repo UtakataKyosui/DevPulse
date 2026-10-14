@@ -8,7 +8,7 @@ export default defineConfig({
     observability: { enabled: true, traces: { enabled: true } },
     env: {
       SNAPSHOTS: bindings.kv(),
-      CONFIG: bindings.kv(),
+      CONFIG: bindings.kv({ id: 'c6c98786bc444b31aa9f213230d5e7f7' }),
       ASSETS: bindings.assets(),
       REPORTS: bindings.d1({ name: 'devpulse-reports' }),
       AI: bindings.ai(),

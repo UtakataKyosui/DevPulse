@@ -3,7 +3,7 @@ export type EnvPlace = 'github-variable' | 'github-secret' | 'worker-secret';
 export type EnvItem = {
   place: EnvPlace;
   name: string;
-  /** false の項目は未設定でも動作する(挙動は setup-checklist.md に記載)。 */
+  /** false の項目は未設定でも動作する(挙動は setup-checklist.md に記載)。cloudflare.config.ts の bindings.secret() は未登録だと cf deploy が失敗するため required にする。 */
   required: boolean;
 };
 
@@ -14,7 +14,7 @@ export const ENV_MANIFEST: readonly EnvItem[] = [
   { place: 'github-secret', name: 'CLOUDFLARE_ACCOUNT_ID', required: true },
   { place: 'github-secret', name: 'REPORTS_TOKEN', required: true },
   { place: 'worker-secret', name: 'REPORTS_TOKEN', required: true },
-  { place: 'worker-secret', name: 'GITHUB_TOKEN', required: false },
+  { place: 'worker-secret', name: 'GITHUB_TOKEN', required: true },
   { place: 'worker-secret', name: 'ADMIN_ALLOWED_EMAILS', required: true },
 ];
 
