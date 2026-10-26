@@ -51,9 +51,9 @@ fi
 # 形式: 表示名|必要な権限|パス
 probes=(
   "Workers scripts|Workers Scripts Read/Edit|/workers/scripts"
-  "Workers KV|Workers KV Storage Read/Edit|/storage/kv/namespaces?per_page=1"
-  "D1|D1 Read/Edit|/d1/database?per_page=1"
-  "Workers AI|Workers AI Read/Edit|/ai/models/search?per_page=1"
+  "Workers KV|Workers KV Storage Read/Edit|/storage/kv/namespaces?per_page=5"
+  "D1|D1 Read/Edit|/d1/database?per_page=10"
+  "Workers AI|Workers AI Read/Edit|/ai/models/search"
 )
 missing=()
 for probe in "${probes[@]}"; do
@@ -61,9 +61,13 @@ for probe in "${probes[@]}"; do
   read -r probe_status probe_ok probe_codes < <(call probe "/accounts/${CLOUDFLARE_ACCOUNT_ID}${path}")
   if [ "$probe_ok" = true ]; then
     ok "${label}: accessible"
-  else
+  elif [ "$probe_status" = 401 ] || [ "$probe_status" = 403 ]; then
     fail "${label}: HTTP ${probe_status} [${probe_codes:-none}] - add \"${permission}\" for this account"
     missing+=("$permission")
+  else
+    # 権限以外の拒否(パラメータの不正など)ではデプロイを止めない。実際のデプロイが判断する。
+    echo "::warning title=Cloudflare credentials::${label}: unexpected HTTP ${probe_status} [${probe_codes:-none}]; skipping this check"
+    echo "- ⚠️ ${label}: unexpected HTTP ${probe_status} [${probe_codes:-none}], not treated as a permission error" >>"$summary"
   fi
 done
 [ "${#missing[@]}" -eq 0 ] || exit 1
