@@ -20,6 +20,7 @@ jobs:
     env:
       CF_SEND_TELEMETRY: 'false'
       DEVPULSE_SITE_URL: ${{ vars.DEVPULSE_SITE_URL }}
+      CI_REPORT_DIR: ${{ runner.temp }}/ci-report
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
@@ -30,22 +31,28 @@ jobs:
           node-version: 22.18.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # デプロイ前に認証だけを確認し、401 の原因(未設定・失効・アカウント違い)を切り分ける。
+      - name: Verify Cloudflare credentials
+        run: bash scripts/ci/run-logged.sh verify-cloudflare bash scripts/ci/verify-cloudflare-auth.sh
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       # 取得に失敗するとここでジョブが止まり、デプロイされない(fixture へは切り替えない)。
       - name: Fetch project config
-        run: pnpm run projects:fetch
+        run: bash scripts/ci/run-logged.sh projects-fetch pnpm run projects:fetch
       - name: Fetch saved reports
-        run: pnpm run reports:fetch
+        run: bash scripts/ci/run-logged.sh reports-fetch pnpm run reports:fetch
         env:
           REPORTS_TOKEN: ${{ secrets.REPORTS_TOKEN }}
-      - run: pnpm run test
-      - run: pnpm run typecheck
-      - run: pnpm run build
-      - run: pnpm run worker:check
+      - run: bash scripts/ci/run-logged.sh test pnpm run test
+      - run: bash scripts/ci/run-logged.sh typecheck pnpm run typecheck
+      - run: bash scripts/ci/run-logged.sh build pnpm run build
+      - run: bash scripts/ci/run-logged.sh worker-check pnpm run worker:check
         env:
           ACCESS_TEAM_DOMAIN: ${{ secrets.ACCESS_TEAM_DOMAIN }}
           ACCESS_AUD: ${{ secrets.ACCESS_AUD }}
       - name: Publish articles and RSS
-        run: pnpm run worker:deploy
+        run: bash scripts/ci/run-logged.sh worker-deploy pnpm run worker:deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -53,7 +60,25 @@ jobs:
           ACCESS_AUD: ${{ secrets.ACCESS_AUD }}
       - name: Verify published feed and acknowledge
         run: |
-          node scripts/verify-reports.ts
-          pnpm run reports:ack
+          bash scripts/ci/run-logged.sh verify-reports node scripts/verify-reports.ts
+          bash scripts/ci/run-logged.sh reports-ack pnpm run reports:ack
         env:
           REPORTS_TOKEN: ${{ secrets.REPORTS_TOKEN }}
+      # 失敗したステップとログの要点を report.md にまとめ、Step Summary と artifact に残す。
+      - name: Build failure report
+        if: failure()
+        run: bash scripts/ci/build-failure-report.sh
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          REPORTS_TOKEN: ${{ secrets.REPORTS_TOKEN }}
+          ACCESS_TEAM_DOMAIN: ${{ secrets.ACCESS_TEAM_DOMAIN }}
+          ACCESS_AUD: ${{ secrets.ACCESS_AUD }}
+      - name: Upload failure report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-failure-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.CI_REPORT_DIR }}/report.md
+          retention-days: 30
+          if-no-files-found: warn
