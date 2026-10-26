@@ -47,10 +47,27 @@ else
   exit 1
 fi
 
-read -r detail_status detail_ok detail_codes < <(call detail "/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts")
-if [ "$detail_ok" = true ]; then
-  ok "Token can list Workers scripts in account ${CLOUDFLARE_ACCOUNT_ID:0:4}…"
-else
-  fail "Token is valid but cannot access Workers in this account (HTTP ${detail_status} [${detail_codes:-none}]). Check the token's Workers Scripts permission and account resources."
-  exit 1
-fi
+# デプロイが使う権限を 1 つずつ確認し、足りないものを全部まとめて報告する。
+# 形式: 表示名|必要な権限|パス
+probes=(
+  "Workers scripts|Workers Scripts Read/Edit|/workers/scripts"
+  "Workers KV|Workers KV Storage Read/Edit|/storage/kv/namespaces?per_page=5"
+  "D1|D1 Read/Edit|/d1/database?per_page=10"
+  "Workers AI|Workers AI Read/Edit|/ai/models/search"
+)
+missing=()
+for probe in "${probes[@]}"; do
+  IFS='|' read -r label permission path <<<"$probe"
+  read -r probe_status probe_ok probe_codes < <(call probe "/accounts/${CLOUDFLARE_ACCOUNT_ID}${path}")
+  if [ "$probe_ok" = true ]; then
+    ok "${label}: accessible"
+  elif [ "$probe_status" = 401 ] || [ "$probe_status" = 403 ]; then
+    fail "${label}: HTTP ${probe_status} [${probe_codes:-none}] - add \"${permission}\" for this account"
+    missing+=("$permission")
+  else
+    # 権限以外の拒否(パラメータの不正など)ではデプロイを止めない。実際のデプロイが判断する。
+    echo "::warning title=Cloudflare credentials::${label}: unexpected HTTP ${probe_status} [${probe_codes:-none}]; skipping this check"
+    echo "- ⚠️ ${label}: unexpected HTTP ${probe_status} [${probe_codes:-none}], not treated as a permission error" >>"$summary"
+  fi
+done
+[ "${#missing[@]}" -eq 0 ] || exit 1
